@@ -2303,10 +2303,98 @@ function fallbackCompose(items) {
   outfit.pieces.push(...jewels);
   outfit.pieces = outfit.pieces.filter(Boolean);
 
-  outfit.note = (tempF < 40)
-    ? "Layer under this — the catalog is thin on heavy knits right now."
-    : "A working sketch. Wire the API in the file for sharper picks.";
+  outfit.note = composeNote();
   return outfit;
+}
+
+/* -------------------- STYLIST NOTE COMPOSER --------------------
+   Builds a short, unique note per generation from what the user told us.
+   Tries an aesthetic + occasion mix first; falls back to a weather line
+   if the user skipped the optional questions.
+--------------------------------------------------------------- */
+function composeNote() {
+  const w = state.weather || {};
+  const tempF = w.tempF;
+  const tags = new Set(w.tags || []);
+  const occ = (state.occasion || "").trim();
+  const vibe = (state.vibe || "").trim();
+  const a1 = state.aesthetic;
+  const a2 = state.aesthetic_target;
+
+  // ---- helpers ----
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const aestheticLabel = id => ({
+    minimalist: "minimalist", streetwear: "streetwear", romantic: "romantic",
+    edgy: "edgy", eclectic: "eclectic", preppy: "preppy"
+  })[id] || id;
+  const aestheticPhrase = () => {
+    if (a1 && a2 && a1 !== a2) return `in between ${aestheticLabel(a1)} and ${aestheticLabel(a2)}`;
+    if (a1) return `leaning ${aestheticLabel(a1)}`;
+    return "";
+  };
+  const occasionPhrase = () => {
+    if (!occ) return "";
+    // Trim leading "a/an/the/for " so "a coffee date" reads "coffee date"
+    const cleaned = occ.replace(/^(a |an |the |for )/i, "").toLowerCase();
+    return `for ${cleaned}`;
+  };
+  const occasionSendoff = () => {
+    if (!occ) return "";
+    const o = occ.toLowerCase();
+    if (/date|coffee|dinner|drinks/.test(o)) return "Best of luck on your date!";
+    if (/interview/.test(o)) return "Go get it.";
+    if (/wedding/.test(o)) return "Have fun out there.";
+    if (/flight|travel|trip/.test(o)) return "Safe travels.";
+    if (/first day|new job/.test(o)) return "You've got this.";
+    if (/gallery|opening|show/.test(o)) return "Enjoy the night.";
+    if (/party|night|concert/.test(o)) return "Have a good one.";
+    return "";
+  };
+  const weatherLine = () => {
+    if (tags.has("severe-cold") || (tempF != null && tempF < 32)) return pick(["Bundle up out there.","It's brutal today — layer under this.","Wear the warmest thing you own under this."]);
+    if (tags.has("snow")) return "Watch your step in the snow.";
+    if (tags.has("wet")) return pick(["Grab an umbrella too.","Don't forget an umbrella."]);
+    if (tags.has("wind")) return "Bit windy — anchor it down.";
+    if (tags.has("severe-hot") || (tempF != null && tempF > 88)) return pick(["Stay cool out there.","Hydrate — it's a hot one."]);
+    if (tempF != null && tempF < 50) return pick(["Chilly one today.","Cold out — but you're set."]);
+    if (tempF != null && tempF > 78) return "Warm one today — you're set.";
+    if (tempF != null && tempF >= 60 && tempF <= 75) return pick(["At least it's not too cold today.","Perfect weather for it.","Nice day for this."]);
+    return "";
+  };
+
+  // ---- primary: aesthetic + occasion mix ----
+  // "Here's something for coffee, in between preppy and streetwear. Best of luck on your date!"
+  const aPhrase = aestheticPhrase();
+  const oPhrase = occasionPhrase();
+  const sendoff = occasionSendoff();
+  if (aPhrase && oPhrase) {
+    const opener = pick([
+      `Here's something ${oPhrase}, ${aPhrase}.`,
+      `Something ${aPhrase} ${oPhrase}.`,
+      `Put together ${oPhrase}, ${aPhrase}.`
+    ]);
+    return sendoff ? `${opener} ${sendoff}` : opener;
+  }
+  if (aPhrase && !oPhrase) {
+    // No occasion — combine aesthetic with weather when possible
+    const wLine = weatherLine();
+    const opener = pick([
+      `Something ${aPhrase}.`,
+      `A pick ${aPhrase}.`,
+      `Here's one ${aPhrase}.`
+    ]);
+    return wLine ? `${opener} ${wLine}` : opener;
+  }
+  if (!aPhrase && oPhrase) {
+    const opener = pick([
+      `Here's something ${oPhrase}.`,
+      `A pick ${oPhrase}.`
+    ]);
+    return sendoff ? `${opener} ${sendoff}` : opener;
+  }
+
+  // ---- fallback: just the weather ----
+  return weatherLine() || pick(["Something for today.","Here's a pick.","One for the day."]);
 }
 
 async function askClaudeForOutfit(items) {
