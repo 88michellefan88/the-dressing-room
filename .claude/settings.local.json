@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -c user.email=you@example.com -c user.name=you commit -m \"Initial commit\" --quiet)"
+    ]
+  }
+}

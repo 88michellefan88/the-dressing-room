@@ -1,0 +1,2572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>The Dressing Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ---------- design tokens ---------- */
+:root {
+  color-scheme: light;
+  --paper: #F2ECDD;         /* warm parchment */
+  --paper-2: #E8DFC9;       /* card surface */
+  --ink: #2A1E2A;           /* deep aubergine, near-black */
+  --ink-soft: #5A4A5A;
+  --rule: #C9BFA6;
+  --accent: #F0DFA0;        /* butter yellow — used sparingly */
+  --accent-ink: #2A1E2A;
+  --danger: #B23A2E;
+  --shadow: 0 1px 0 rgba(42,30,42,0.08), 0 12px 32px -18px rgba(42,30,42,0.35);
+  --radius: 2px;            /* nearly none — editorial */
+  --radius-lg: 4px;
+  --font-display: "Instrument Serif", "Playfair Display", Georgia, serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+/* subtle grain — makes the parchment feel like paper, not a flat fill */
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(rgba(42,30,42,0.03) 1px, transparent 1px);
+  background-size: 3px 3px;
+  mix-blend-mode: multiply;
+  z-index: 1;
+}
+.wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- masthead ---------- */
+header.mast {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 28px;
+}
+.mast .title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(28px, 6vw, 40px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.mast .meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* ---------- progress ---------- */
+.progress {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 32px;
+}
+.progress span {
+  flex: 1;
+  height: 2px;
+  background: var(--rule);
+  transition: background 240ms ease;
+}
+.progress span.done { background: var(--ink); }
+.progress span.current { background: var(--accent); }
+
+/* ---------- question card ---------- */
+.q {
+  display: none;
+  animation: fadeUp 400ms cubic-bezier(.2,.7,.2,1) both;
+}
+.q.active { display: block; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.q .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+}
+.q h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(30px, 6vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px;
+}
+.q h2 em { font-style: italic; }
+.q .helper {
+  color: var(--ink-soft);
+  font-size: 15px;
+  margin: 0 0 24px;
+  max-width: 52ch;
+}
+
+/* ---------- option grids ---------- */
+.opts {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.opts.two { grid-template-columns: 1fr 1fr; }
+.opts.aesthetic { grid-template-columns: 1fr 1fr; }
+@media (min-width: 560px) {
+  .opts.aesthetic { grid-template-columns: repeat(3, 1fr); }
+}
+.opt {
+  position: relative;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 14px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.opt:hover { border-color: var(--ink); transform: translateY(-1px); }
+.opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.opt.selected {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: var(--shadow);
+}
+.opt.selected .opt-sub { color: rgba(242,236,221,0.7); }
+.opt .opt-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.opt .opt-name em { font-style: italic; }
+.opt .opt-sub {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+
+/* aesthetic visual: real photo, with SVG silhouette fallback */
+.aesthetic-vis {
+  aspect-ratio: 3 / 4;      /* portrait — matches Pinterest-style flatlays */
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+}
+.opt.selected .aesthetic-vis { border-color: var(--paper); }
+.aesthetic-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: contrast(0.98) saturate(0.92); /* pull toward the paper palette */
+}
+.aesthetic-fallback { display: none; }
+
+/* palette visual: 5 swatches */
+.palette-vis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  aspect-ratio: 5 / 1.2;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--rule);
+}
+.opt.selected .palette-vis { border-color: var(--paper); }
+.palette-vis span { display: block; }
+
+/* ---------- text inputs ---------- */
+.field {
+  margin-bottom: 20px;
+}
+.field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+textarea, input[type=text] {
+  width: 100%;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 14px;
+  font: inherit;
+  color: var(--ink);
+  resize: vertical;
+  min-height: 88px;
+  transition: border-color 160ms ease;
+}
+textarea:focus, input[type=text]:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+.parse-echo {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.parse-echo span { color: var(--ink); }
+
+/* ---------- nav row ---------- */
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+.nav .btn { flex: 0 1 auto; }
+.btn {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 14px 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+.btn:hover { transform: translateY(-1px); background: rgba(240,223,160,0.35); }
+.btn.primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+.btn.primary:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.ghost { border-color: transparent; color: var(--ink-soft); padding: 14px 8px; }
+.btn.ghost:hover { color: var(--ink); background: rgba(240,223,160,0.35); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* ---------- result page ---------- */
+.result { display: none; }
+.result.active { display: block; animation: fadeUp 500ms cubic-bezier(.2,.7,.2,1) both; }
+
+.result-head {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 20px 0;
+  margin-bottom: 28px;
+  display: grid;
+  gap: 6px;
+}
+.result-head .kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.result-head .place {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(28px, 6vw, 40px);
+  line-height: 1;
+}
+.result-head .weather {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+.result-head .temp {
+  color: var(--ink);
+  font-size: 15px;
+}
+.result-head .temp b { font-weight: 500; }
+
+.section {
+  margin-bottom: 36px;
+}
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.section-title .num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  letter-spacing: 0.14em;
+}
+.section-title h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 26px;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.section-title .rule {
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+/* item card — the CSS-illustrated garment sketch */
+.items {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 560px) {
+  .items { grid-template-columns: repeat(3, 1fr); }
+}
+.item {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+.item:hover { border-color: var(--ink); transform: translateY(-2px); }
+.item .canvas {
+  aspect-ratio: 1 / 1;
+  background: var(--paper);
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+}
+.item .canvas svg { width: 82%; height: 82%; }
+.item .canvas .item-photo {
+  width: 100%; height: 100%;
+  object-fit: contain;              /* preserve full garment — no crop */
+  padding: 6%;                       /* small breathing room */
+  display: block;
+  background: var(--paper);
+  filter: contrast(0.98) saturate(0.94); /* pull toward the paper palette */
+}
+.item .canvas .item-svg {
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.item .swatches {
+  position: absolute;
+  bottom: 8px; left: 8px;
+  display: flex;
+  gap: 4px;
+}
+.item .swatches span {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(42,30,42,0.2);
+}
+.item .name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+}
+.item .brand {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.item .shop {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  border-top: 1px solid var(--rule);
+  padding-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.item .shop:hover { color: var(--accent-ink); }
+.item .shop::after { content: "→"; }
+
+/* stylist note pulled from Claude */
+.note {
+  background: transparent;
+  border-left: 2px solid var(--ink);
+  padding: 4px 0 4px 16px;
+  margin: 28px 0 36px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 20px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+/* loading state — flipbook of garment silhouettes + rotating text */
+.loading {
+  display: none;
+  text-align: center;
+  padding: 40px 0;
+}
+.loading.active { display: block; }
+.flipbook {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.flipbook .slot {
+  width: 90px;
+  height: 90px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+}
+.flipbook .slot svg {
+  width: 78%;
+  height: 78%;
+  animation: flipIn 260ms cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes flipIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.loading .phrase {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 32px;
+  line-height: 1.1;
+  color: var(--ink);
+  min-height: 1.2em;
+  animation: phraseFade 320ms cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes phraseFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.loading .sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-top: 12px;
+}
+@media (max-width: 380px) {
+  .flipbook .slot { width: 72px; height: 72px; }
+  .loading .phrase { font-size: 26px; }
+}
+
+/* error / info banner */
+.banner {
+  display: none;
+  border: 1px solid var(--danger);
+  background: rgba(178,58,46,0.06);
+  color: var(--danger);
+  padding: 12px 14px;
+  font-size: 13px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+.banner.active { display: block; }
+
+/* footer */
+footer {
+  margin-top: auto;
+  padding-top: 40px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* feedback panel */
+.feedback {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+  animation: fadeUp 320ms cubic-bezier(.2,.7,.2,1) both;
+}
+.feedback h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 4px 0 8px;
+  letter-spacing: -0.01em;
+}
+.feedback h3::before { content: none; }
+.feedback .helper {
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin: 0 0 18px;
+  max-width: 52ch;
+}
+.feedback-thanks .thanks-line {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.35;
+  color: var(--ink);
+  margin: 8px 0 0;
+  max-width: 46ch;
+}
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
+
+/* small phones */
+@media (max-width: 380px) {
+  .wrap { padding: 20px 16px 60px; }
+  .opts.aesthetic { grid-template-columns: 1fr; }
+  .items { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <div class="title">The Dressing Room</div>
+    <div class="meta" id="today">—</div>
+  </header>
+
+  <div class="progress" id="progress" aria-hidden="true"></div>
+
+  <div id="banner" class="banner"></div>
+
+  <!-- ============ QUESTIONS ============ -->
+  <main id="flow">
+
+    <!-- Q1 aesthetic — current -->
+    <section class="q" data-q="1">
+      <div class="eyebrow">Question 01 · Aesthetic · Now</div>
+      <h2>Which world do you dress <em>from</em>?</h2>
+      <p class="helper">Pick the one closest to how you already dress — not the one you admire from afar.</p>
+      <div class="opts aesthetic" data-field="aesthetic" role="radiogroup"></div>
+      <div class="nav">
+        <button class="btn ghost" disabled>Back</button>
+        <button class="btn primary" data-next="2" disabled>Continue</button>
+      </div>
+    </section>
+
+    <!-- Q2 aesthetic — aspirational -->
+    <section class="q" data-q="2">
+      <div class="eyebrow">Question 02 · Aesthetic · Next</div>
+      <h2>Which world do you want to dress <em>more</em> like?</h2>
+      <p class="helper">Pick where you're heading. Same one as before is a totally valid answer.</p>
+      <div class="opts aesthetic" data-field="aesthetic_target" role="radiogroup"></div>
+      <div class="nav">
+        <button class="btn" data-back="1">Back</button>
+        <button class="btn primary" data-next="3" disabled>Continue</button>
+      </div>
+    </section>
+
+    <!-- Q3 palette current -->
+    <section class="q" data-q="3">
+      <div class="eyebrow">Question 03 · Palette · What you wear</div>
+      <h2>The colors <em>already</em> in your closet.</h2>
+      <p class="helper">Pick the palette closest to what you actually reach for.</p>
+      <div class="opts" data-field="palette_current" role="radiogroup"></div>
+      <div class="nav">
+        <button class="btn" data-back="2">Back</button>
+        <button class="btn primary" data-next="4" disabled>Continue</button>
+      </div>
+    </section>
+
+    <!-- Q4 palette aspirational -->
+    <section class="q" data-q="4">
+      <div class="eyebrow">Question 04 · Palette · What you want more of</div>
+      <h2>The colors you want to wear <em>more</em>.</h2>
+      <p class="helper">Same palettes, reshuffled — pick where you're heading.</p>
+      <div class="opts" data-field="palette_target" role="radiogroup"></div>
+      <div class="nav">
+        <button class="btn" data-back="3">Back</button>
+        <button class="btn primary" data-next="5" disabled>Continue</button>
+      </div>
+    </section>
+
+    <!-- Q5 location -->
+    <section class="q" data-q="5">
+      <div class="eyebrow">Question 05 · Location</div>
+      <h2>Where are you today?</h2>
+      <p class="helper">We use it only to pull the weather. Nothing is stored.</p>
+      <div class="opts two" data-field="location_mode" role="radiogroup">
+        <button class="opt" data-val="share">
+          <div class="opt-name"><em>Use</em> my location</div>
+          <div class="opt-sub">One-tap browser prompt.</div>
+        </button>
+        <button class="opt" data-val="skip">
+          <div class="opt-name">I'll <em>describe</em> the weather</div>
+          <div class="opt-sub">No location needed.</div>
+        </button>
+      </div>
+      <div class="nav">
+        <button class="btn" data-back="4">Back</button>
+        <button class="btn primary" data-next="6" disabled>Continue</button>
+      </div>
+    </section>
+
+    <!-- Q6 manual weather (conditional) -->
+    <section class="q" data-q="6">
+      <div class="eyebrow">Question 06 · Weather</div>
+      <h2>What's it like <em>outside</em>?</h2>
+      <p class="helper">Temperature in °F or °C, and anything else — rain, wind, humidity, that specific spring-cold-in-shade thing.</p>
+      <div class="field">
+        <label for="weather_text">Describe the day</label>
+        <textarea id="weather_text" placeholder="e.g. 58°F, overcast and windy, feels colder in the shade"></textarea>
+        <div class="parse-echo" id="weather_echo" hidden>Understood as: <span></span></div>
+      </div>
+      <div class="nav">
+        <button class="btn" data-back="5">Back</button>
+        <button class="btn primary" data-next="7" disabled>Continue</button>
+      </div>
+    </section>
+
+    <!-- Q7 occasion -->
+    <section class="q" data-q="7">
+      <div class="eyebrow">Question 07 · Occasion · Optional</div>
+      <h2>Dressing for <em>anything</em> in particular?</h2>
+      <p class="helper">A dinner, a first day, a long flight, nothing at all — skip if it's just a regular day.</p>
+      <div class="field">
+        <label for="occasion">Occasion</label>
+        <input type="text" id="occasion" placeholder="e.g. gallery opening, coffee with an ex, WFH" />
+      </div>
+      <div class="nav">
+        <button class="btn" data-back="6">Back</button>
+        <button class="btn ghost" data-next="8">Skip</button>
+        <button class="btn primary" data-next="8">Continue</button>
+      </div>
+    </section>
+
+    <!-- Q8 vibe notes -->
+    <section class="q" data-q="8">
+      <div class="eyebrow">Question 08 · Vibe · Optional</div>
+      <h2>Anything else about the <em>mood</em>?</h2>
+      <p class="helper">A texture you're into, a movie reference, "want to feel like I mean it" — whatever helps.</p>
+      <div class="field">
+        <label for="vibe">Notes</label>
+        <textarea id="vibe" placeholder="e.g. want something more architectural today, less soft"></textarea>
+      </div>
+      <div class="nav">
+        <button class="btn" data-back="7">Back</button>
+        <button class="btn ghost" data-next="9">Skip</button>
+        <button class="btn primary" data-next="9">Continue</button>
+      </div>
+    </section>
+
+    <!-- Q9 song stuck in head — the quirky one -->
+    <section class="q" data-q="9">
+      <div class="eyebrow">Question 09 · One last thing · Optional</div>
+      <h2>What song is <em>stuck</em> in your head?</h2>
+      <p class="helper">Not sure why, but it helps. Artist and title, a lyric, or just a vibe — whatever comes first.</p>
+      <div class="field">
+        <label for="song">Song</label>
+        <input type="text" id="song" placeholder="e.g. 'Nights' — Frank Ocean" />
+      </div>
+      <div class="nav">
+        <button class="btn" data-back="8">Back</button>
+        <button class="btn primary" id="submit">Dress me</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ LOADING ============ -->
+  <div class="loading" id="loading">
+    <div class="flipbook" id="flipbook">
+      <div class="slot" data-slot="0"></div>
+      <div class="slot" data-slot="1"></div>
+      <div class="slot" data-slot="2"></div>
+    </div>
+    <div class="phrase" id="loading-phrase">brb raiding the closet</div>
+    <div class="sub">reading the weather · reading the mood · reading you</div>
+  </div>
+
+  <!-- ============ RESULT ============ -->
+  <section class="result" id="result">
+    <div class="result-head">
+      <div class="kicker" id="rk-date">—</div>
+      <div class="place" id="rk-place">—</div>
+      <div class="weather">
+        <span class="temp" id="rk-temp">—</span>
+        <span id="rk-cond">—</span>
+      </div>
+    </div>
+
+    <div class="note" id="rk-note"></div>
+
+    <div id="rk-sections"></div>
+
+    <div class="nav" style="justify-content: flex-start; gap: 12px; flex-wrap: wrap;">
+      <button class="btn primary" id="regen">Try another combination</button>
+      <button class="btn" id="feedback-open">I'd wear this instead</button>
+      <button class="btn" id="restart">Start over</button>
+    </div>
+
+    <!-- Feedback form (hidden until opened) -->
+    <div class="feedback" id="feedback" hidden>
+      <div class="feedback-inner">
+        <div class="eyebrow">Feedback</div>
+        <h3>What would you wear instead?</h3>
+        <p class="helper">Describe the outfit you'd actually pick — pieces, colors, silhouette, energy. This adjusts future picks for you.</p>
+        <div class="field">
+          <label for="feedback_text">Your version</label>
+          <textarea id="feedback_text" placeholder="e.g. swap the wide-leg trousers for a bias midi skirt in black, and skip the beret — feels overdressed"></textarea>
+        </div>
+        <div class="nav" style="justify-content: flex-start;">
+          <button class="btn primary" id="feedback-submit">Save it</button>
+          <button class="btn" id="feedback-cancel">Never mind</button>
+        </div>
+      </div>
+      <div class="feedback-thanks" id="feedback-thanks" hidden>
+        <div class="eyebrow">Saved</div>
+        <p class="thanks-line">Noted. I'll lean on this next time you land on a similar day.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>The Dressing Room · Personal Edition</span>
+    <span id="footer-meta">v1</span>
+  </footer>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIG — paste your Anthropic API key below (starts with "sk-ant-...")
+   Get one at: https://console.anthropic.com/settings/keys
+   ===================================================================== */
+const ANTHROPIC_API_KEY = ""; // <-- paste key here
+const ANTHROPIC_MODEL   = "claude-sonnet-4-5"; // fast + capable
+/* ===================================================================== */
+
+/* -------------------- STATE -------------------- */
+const state = {
+  aesthetic: null,
+  aesthetic_target: null,
+  palette_current: null,
+  palette_target: null,
+  location_mode: null,     // "share" | "skip"
+  weather: null,           // { tempC, tempF, condition, city, source: "geo"|"manual", raw }
+  weather_text: "",
+  occasion: "",
+  vibe: "",
+  song: "",
+  step: 1
+};
+const TOTAL_STEPS = 9;
+let currentOutfit = null; // set after each generation, used for feedback context
+
+/* -------------------- FEEDBACK STORE (localStorage) --------------------
+   Structure:
+     [
+       { ts, aesthetic, aesthetic_target, palette_current, palette_target,
+         occasion, vibe, tempF, condition, generated: ["item name", ...],
+         feedback: "user's text" },
+       ...
+     ]
+   Capped at 30 recent entries.
+------------------------------------------------------------------------ */
+const FEEDBACK_KEY = "dressingroom.feedback.v1";
+function loadFeedback() {
+  try { return JSON.parse(localStorage.getItem(FEEDBACK_KEY) || "[]"); }
+  catch (_) { return []; }
+}
+function saveFeedback(list) {
+  try { localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list.slice(-30))); } catch (_) {}
+}
+function addFeedback(entry) {
+  const list = loadFeedback();
+  list.push(entry);
+  saveFeedback(list);
+}
+/* Return feedback entries whose aesthetic overlaps with the current selection —
+   these are the ones worth showing to Claude. */
+function relevantFeedback() {
+  const list = loadFeedback();
+  const aesthetics = new Set([state.aesthetic, state.aesthetic_target].filter(Boolean));
+  return list.filter(f => aesthetics.has(f.aesthetic) || aesthetics.has(f.aesthetic_target)).slice(-8);
+}
+
+/* -------------------- CATALOG (seed) --------------------
+   Schema per item:
+   { id, category, name, brand, retailer, search_url,
+     aesthetics: [...], palettes: [...], warmth_range: [minF, maxF],
+     occasions: [...], colors: ["#hex", ...], shape: "top-tshirt" (SVG key) }
+
+   `shape` maps to a garment silhouette drawn in inline SVG (defined below).
+   `colors` renders as swatches on the card.
+   `search_url` opens a retailer search for this item — no fragile hotlinking.
+   Add real image_url later if you want photography instead of illustration.
+--------------------------------------------------------- */
+const CATALOG = [
+  // ---- TOPS ----
+  { id:"t1", category:"top", name:"Boxy cotton tee, cream", brand:"COS", retailer:"cos.com",
+    search_url:"https://www.cos.com/en_usd/search.html?q=boxy+cotton+t-shirt",
+    aesthetics:["minimalist","streetwear"], palettes:["neutrals"], warmth_range:[55,95],
+    occasions:["casual","work-casual"], colors:["#F0EAD8","#E8DFC9"], shape:"top-tshirt" },
+  { id:"t2", category:"top", name:"Ribbed knit tank, olive", brand:"Reformation", retailer:"thereformation.com",
+    search_url:"https://www.thereformation.com/search?q=ribbed+knit+tank",
+    aesthetics:["romantic","minimalist"], palettes:["earth","neutrals"], warmth_range:[68,100],
+    occasions:["casual","date"], colors:["#6E7A45","#3A3F27"], shape:"top-tank" },
+  { id:"t3", category:"top", name:"Oversized graphic hoodie", brand:"Aimé Leon Dore", retailer:"aimeleondore.com",
+    search_url:"https://www.aimeleondore.com/search?q=hoodie",
+    aesthetics:["streetwear"], palettes:["neutrals","cool"], warmth_range:[40,68],
+    occasions:["casual"], colors:["#2A2A2A","#8A867A"], shape:"top-hoodie" },
+  { id:"t4", category:"top", name:"Silk blouse, ivory", brand:"Toteme", retailer:"toteme-studio.com",
+    search_url:"https://toteme-studio.com/search?q=silk+blouse",
+    aesthetics:["minimalist","romantic"], palettes:["neutrals"], warmth_range:[55,85],
+    occasions:["work","dinner","date"], colors:["#F4EEDC","#E4DBBF"], shape:"top-blouse" },
+  { id:"t5", category:"top", name:"Cropped leather tank, black", brand:"Rick Owens", retailer:"rickowens.eu",
+    search_url:"https://www.rickowens.eu/en/US/search?q=leather+tank",
+    aesthetics:["edgy"], palettes:["neutrals","bold"], warmth_range:[60,90],
+    occasions:["night","concert"], colors:["#1B1418"], shape:"top-tank" },
+  { id:"t6", category:"top", name:"Printed silk shirt", brand:"Marni", retailer:"marni.com",
+    search_url:"https://www.marni.com/en-us/search?q=printed+shirt",
+    aesthetics:["eclectic"], palettes:["bold","earth"], warmth_range:[55,85],
+    occasions:["dinner","gallery","date"], colors:["#B23A2E","#D9A44F","#2A5F6E"], shape:"top-blouse" },
+
+  // ---- BOTTOMS ----
+  { id:"b1", category:"bottom", name:"Wide-leg wool trousers, black", brand:"The Frankie Shop", retailer:"thefrankieshop.com",
+    search_url:"https://thefrankieshop.com/search?q=wide+leg+trousers",
+    aesthetics:["minimalist","edgy"], palettes:["neutrals","cool"], warmth_range:[35,72],
+    occasions:["work","dinner","gallery"], colors:["#1B1418"], shape:"bottom-trousers" },
+  { id:"b2", category:"bottom", name:"Vintage-wash straight jean", brand:"Levi's", retailer:"levi.com",
+    search_url:"https://www.levi.com/US/en_US/search?text=vintage+straight+jean",
+    aesthetics:["streetwear","minimalist","eclectic"], palettes:["cool","neutrals"], warmth_range:[40,80],
+    occasions:["casual","date"], colors:["#4B5F7A"], shape:"bottom-jean" },
+  { id:"b3", category:"bottom", name:"Utility cargo pant, olive", brand:"Carhartt WIP", retailer:"carhartt-wip.com",
+    search_url:"https://www.carhartt-wip.com/en/search?q=cargo+pant",
+    aesthetics:["streetwear","edgy"], palettes:["earth","neutrals"], warmth_range:[40,75],
+    occasions:["casual"], colors:["#5F5A3E"], shape:"bottom-cargo" },
+  { id:"b4", category:"bottom", name:"Bias-cut midi skirt, cream", brand:"Sézane", retailer:"sezane.com",
+    search_url:"https://www.sezane.com/us/search?q=bias+midi+skirt",
+    aesthetics:["romantic","minimalist"], palettes:["neutrals"], warmth_range:[55,88],
+    occasions:["date","dinner","gallery"], colors:["#F0E8CE"], shape:"bottom-skirt" },
+  { id:"b5", category:"bottom", name:"Pleated tennis skirt, navy", brand:"Uniqlo", retailer:"uniqlo.com",
+    search_url:"https://www.uniqlo.com/us/en/search?q=pleated+skirt",
+    aesthetics:["romantic","eclectic","streetwear","preppy"], palettes:["cool","bold"], warmth_range:[55,90],
+    occasions:["casual","date"], colors:["#1E2A44"], shape:"bottom-skirt" },
+  { id:"b6", category:"bottom", name:"Linen shorts, natural", brand:"Uniqlo", retailer:"uniqlo.com",
+    search_url:"https://www.uniqlo.com/us/en/search?q=linen+shorts",
+    aesthetics:["minimalist","romantic","streetwear"], palettes:["neutrals","earth"], warmth_range:[72,110],
+    occasions:["casual"], colors:["#D9CFAE"], shape:"bottom-shorts" },
+
+  // ---- DRESSES / ONE-PIECE ----
+  { id:"d1", category:"dress", name:"Slip dress, sage", brand:"Reformation", retailer:"thereformation.com",
+    search_url:"https://www.thereformation.com/search?q=slip+dress",
+    aesthetics:["romantic","minimalist"], palettes:["earth","neutrals"], warmth_range:[65,100],
+    occasions:["date","dinner","wedding-guest"], colors:["#A7B084"], shape:"dress-slip" },
+  { id:"d2", category:"dress", name:"Black column dress", brand:"Toteme", retailer:"toteme-studio.com",
+    search_url:"https://toteme-studio.com/search?q=column+dress",
+    aesthetics:["minimalist","edgy"], palettes:["neutrals","bold"], warmth_range:[55,95],
+    occasions:["dinner","gallery","work"], colors:["#1B1418"], shape:"dress-column" },
+  { id:"d3", category:"dress", name:"Printed floral midi", brand:"Ganni", retailer:"ganni.com",
+    search_url:"https://www.ganni.com/en-us/search?q=floral+dress",
+    aesthetics:["eclectic","romantic"], palettes:["bold","earth"], warmth_range:[62,100],
+    occasions:["date","wedding-guest","dinner"], colors:["#D96B5A","#4B6E3B","#F0E8CE"], shape:"dress-slip" },
+
+  // ---- SHOES ----
+  { id:"s1", category:"shoes", name:"Leather loafers, black", brand:"G.H. Bass", retailer:"ghbass.com",
+    search_url:"https://www.ghbass.com/search?q=weejun+loafer",
+    aesthetics:["minimalist","eclectic","edgy","preppy"], palettes:["neutrals","cool"], warmth_range:[40,90],
+    occasions:["work","dinner","gallery","date","casual"], colors:["#1B1418"], shape:"shoe-loafer" },
+  { id:"s2", category:"shoes", name:"White low-top sneakers", brand:"Adidas Samba", retailer:"adidas.com",
+    search_url:"https://www.adidas.com/us/search?q=samba",
+    aesthetics:["streetwear","minimalist","eclectic","preppy"], palettes:["neutrals","cool"], warmth_range:[40,100],
+    occasions:["casual"], colors:["#F4EEDC","#1B1418"], shape:"shoe-sneaker" },
+  { id:"s3", category:"shoes", name:"Chunky lug boots", brand:"Dr. Martens", retailer:"drmartens.com",
+    search_url:"https://www.drmartens.com/us/en/search?q=1460",
+    aesthetics:["edgy","eclectic","streetwear"], palettes:["neutrals","bold"], warmth_range:[20,65],
+    occasions:["casual","concert","night"], colors:["#1B1418"], shape:"shoe-boot" },
+  { id:"s4", category:"shoes", name:"Kitten-heel slingback", brand:"Mansur Gavriel", retailer:"mansurgavriel.com",
+    search_url:"https://www.mansurgavriel.com/search?q=slingback",
+    aesthetics:["romantic","minimalist"], palettes:["neutrals","earth"], warmth_range:[45,95],
+    occasions:["dinner","wedding-guest","date","work"], colors:["#C9A57A"], shape:"shoe-heel" },
+  { id:"s5", category:"shoes", name:"Suede knee boot, cognac", brand:"Everlane", retailer:"everlane.com",
+    search_url:"https://www.everlane.com/search?q=knee+boot",
+    aesthetics:["romantic","eclectic","minimalist"], palettes:["earth","neutrals"], warmth_range:[20,60],
+    occasions:["dinner","date","gallery"], colors:["#8A5A3B"], shape:"shoe-boot" },
+
+  // ---- OUTERWEAR ----
+  { id:"o1", category:"outerwear", name:"Oversized camel wool coat", brand:"Toteme", retailer:"toteme-studio.com",
+    search_url:"https://toteme-studio.com/search?q=wool+coat",
+    aesthetics:["minimalist","romantic"], palettes:["neutrals","earth"], warmth_range:[15,55],
+    occasions:["work","dinner","date","gallery"], colors:["#C9A57A"], shape:"outer-coat" },
+  { id:"o2", category:"outerwear", name:"Cropped leather moto", brand:"Acne Studios", retailer:"acnestudios.com",
+    search_url:"https://www.acnestudios.com/us/en/search?q=leather+jacket",
+    aesthetics:["edgy","eclectic","streetwear"], palettes:["neutrals","bold"], warmth_range:[45,65],
+    occasions:["night","concert","date","casual"], colors:["#1B1418"], shape:"outer-moto" },
+  { id:"o3", category:"outerwear", name:"Cotton trench, stone", brand:"Everlane", retailer:"everlane.com",
+    search_url:"https://www.everlane.com/search?q=trench+coat",
+    aesthetics:["minimalist","romantic","preppy"], palettes:["neutrals","earth"], warmth_range:[45,68],
+    occasions:["work","gallery","date"], colors:["#D6C9A8"], shape:"outer-trench" },
+  { id:"o4", category:"outerwear", name:"Chore jacket, faded indigo", brand:"Carhartt WIP", retailer:"carhartt-wip.com",
+    search_url:"https://www.carhartt-wip.com/en/search?q=chore+coat",
+    aesthetics:["streetwear","minimalist","eclectic"], palettes:["cool","neutrals","earth"], warmth_range:[48,68],
+    occasions:["casual","date"], colors:["#4B5F7A"], shape:"outer-moto" },
+  { id:"o5", category:"outerwear", name:"Silk-blend shawl, oxblood", brand:"& Other Stories", retailer:"stories.com",
+    search_url:"https://www.stories.com/en_usd/search.html?q=shawl",
+    aesthetics:["romantic","eclectic"], palettes:["bold","earth"], warmth_range:[55,72],
+    occasions:["dinner","date","gallery"], colors:["#7A2A2E"], shape:"outer-shawl" },
+  { id:"o6", category:"outerwear", name:"Water-repellent shell", brand:"Uniqlo", retailer:"uniqlo.com",
+    search_url:"https://www.uniqlo.com/us/en/search?q=blocktech+parka",
+    aesthetics:["streetwear","minimalist"], palettes:["neutrals","cool"], warmth_range:[38,60],
+    occasions:["casual"], colors:["#2A2A2A"], shape:"outer-shell" },
+
+  // ---- ACCESSORIES: HEADWEAR ----
+  { id:"h1", category:"headwear", name:"Structured wool beret", brand:"Sézane", retailer:"sezane.com",
+    search_url:"https://www.sezane.com/us/search?q=beret",
+    aesthetics:["romantic","eclectic"], palettes:["neutrals","bold"], warmth_range:[25,60],
+    occasions:["casual","date","gallery"], colors:["#1B1418"], shape:"head-beret" },
+  { id:"h2", category:"headwear", name:"Cotton baseball cap, washed", brand:"Aimé Leon Dore", retailer:"aimeleondore.com",
+    search_url:"https://www.aimeleondore.com/search?q=cap",
+    aesthetics:["streetwear","minimalist"], palettes:["neutrals","earth"], warmth_range:[45,100],
+    occasions:["casual"], colors:["#8A867A"], shape:"head-cap" },
+  { id:"h3", category:"headwear", name:"Wide-brim wool hat, camel", brand:"Janessa Leone", retailer:"janessaleone.com",
+    search_url:"https://janessaleone.com/search?q=wide+brim",
+    aesthetics:["romantic","eclectic","minimalist"], palettes:["earth","neutrals"], warmth_range:[35,75],
+    occasions:["casual","date","gallery"], colors:["#C9A57A"], shape:"head-widebrim" },
+
+  // ---- ACCESSORIES: JEWELRY ----
+  { id:"j1", category:"jewelry", name:"Chunky gold hoops", brand:"Missoma", retailer:"missoma.com",
+    search_url:"https://www.missoma.com/search?q=chunky+gold+hoops",
+    aesthetics:["eclectic","romantic","minimalist"], palettes:["earth","neutrals","bold"], warmth_range:[0,120],
+    occasions:["dinner","date","gallery","casual","work"], colors:["#D9A44F"], shape:"jew-hoop" },
+  { id:"j2", category:"jewelry", name:"Silver signet ring", brand:"Mejuri", retailer:"mejuri.com",
+    search_url:"https://mejuri.com/search?q=signet+ring",
+    aesthetics:["minimalist","edgy","streetwear"], palettes:["cool","neutrals"], warmth_range:[0,120],
+    occasions:["work","dinner","date","gallery","casual"], colors:["#B8B8BE"], shape:"jew-ring" },
+  { id:"j3", category:"jewelry", name:"Layered gold chain", brand:"Mejuri", retailer:"mejuri.com",
+    search_url:"https://mejuri.com/search?q=gold+chain",
+    aesthetics:["minimalist","streetwear","edgy","eclectic"], palettes:["neutrals","earth","bold"], warmth_range:[0,120],
+    occasions:["dinner","date","gallery","casual"], colors:["#D9A44F"], shape:"jew-chain" },
+  { id:"j4", category:"jewelry", name:"Pearl drop earrings", brand:"Sophie Bille Brahe", retailer:"sophiebillebrahe.com",
+    search_url:"https://sophiebillebrahe.com/search?q=pearl+earring",
+    aesthetics:["romantic","minimalist","preppy"], palettes:["neutrals"], warmth_range:[0,120],
+    occasions:["wedding-guest","dinner","date","work"], colors:["#F4EEDC","#D9A44F"], shape:"jew-hoop" },
+
+  // ---- ACCESSORIES: BAG ----
+  { id:"g1", category:"bag", name:"Structured leather tote, black", brand:"Mansur Gavriel", retailer:"mansurgavriel.com",
+    search_url:"https://www.mansurgavriel.com/search?q=tote",
+    aesthetics:["minimalist","edgy","preppy"], palettes:["neutrals"], warmth_range:[0,120],
+    occasions:["work","gallery","dinner"], colors:["#1B1418"], shape:"bag-tote" },
+  { id:"g2", category:"bag", name:"Woven raffia crossbody", brand:"Sézane", retailer:"sezane.com",
+    search_url:"https://www.sezane.com/us/search?q=raffia+bag",
+    aesthetics:["romantic","eclectic"], palettes:["earth","neutrals"], warmth_range:[55,110],
+    occasions:["casual","date","dinner"], colors:["#C9A57A","#8A5A3B"], shape:"bag-cross" },
+  { id:"g3", category:"bag", name:"Nylon shoulder bag, black", brand:"Prada (vintage)", retailer:"grailed.com",
+    search_url:"https://www.grailed.com/shop?category=women&search=prada+nylon+shoulder",
+    aesthetics:["streetwear","eclectic","edgy"], palettes:["neutrals","cool"], warmth_range:[0,120],
+    occasions:["casual","night","gallery","date"], colors:["#1B1418"], shape:"bag-cross" },
+
+  // ================ EXPANSION: +80 items ================
+
+  // ---- TOPS (13) ----
+  { id:"t7", category:"top", name:"Merino turtleneck, charcoal", brand:"Everlane", retailer:"everlane.com",
+    search_url:"https://www.everlane.com/search?q=merino+turtleneck",
+    aesthetics:["minimalist","edgy"], palettes:["neutrals","cool"], warmth_range:[20,55],
+    occasions:["work","dinner","gallery","date"], colors:["#33383F"], shape:"top-sweater" },
+  { id:"t8", category:"top", name:"Chunky wool crewneck, oatmeal", brand:"COS", retailer:"cos.com",
+    search_url:"https://www.cos.com/en_usd/search.html?q=chunky+wool+sweater",
+    aesthetics:["minimalist","romantic"], palettes:["neutrals","earth"], warmth_range:[15,50],
+    occasions:["casual","work","dinner"], colors:["#E4D3B0"], shape:"top-sweater" },
+  { id:"t9", category:"top", name:"Cable-knit fisherman sweater", brand:"L.L. Bean", retailer:"llbean.com",
+    search_url:"https://www.llbean.com/llb/search?q=fisherman+sweater",
+    aesthetics:["minimalist","eclectic","streetwear","preppy"], palettes:["neutrals","earth"], warmth_range:[10,48],
+    occasions:["casual","date"], colors:["#F0EAD8"], shape:"top-sweater" },
+  { id:"t10", category:"top", name:"Cashmere crewneck, camel", brand:"Naadam", retailer:"naadam.co",
+    search_url:"https://naadam.co/search?q=cashmere+crewneck",
+    aesthetics:["minimalist","romantic"], palettes:["neutrals","earth"], warmth_range:[25,58],
+    occasions:["work","dinner","gallery","date"], colors:["#C9A57A"], shape:"top-sweater" },
+  { id:"t11", category:"top", name:"Waffle henley, forest", brand:"Buck Mason", retailer:"buckmason.com",
+    search_url:"https://www.buckmason.com/search?q=waffle+henley",
+    aesthetics:["streetwear","minimalist","preppy"], palettes:["cool","earth"], warmth_range:[40,68],
+    occasions:["casual"], colors:["#2E4A38"], shape:"top-tshirt" },
+  { id:"t12", category:"top", name:"Cropped varsity sweatshirt", brand:"Sporty & Rich", retailer:"sportyandrich.com",
+    search_url:"https://sportyandrich.com/search?q=sweatshirt",
+    aesthetics:["streetwear","romantic"], palettes:["neutrals","cool"], warmth_range:[45,72],
+    occasions:["casual"], colors:["#F4EEDC","#1E2A44"], shape:"top-sweater" },
+  { id:"t13", category:"top", name:"Sheer mesh long-sleeve, black", brand:"Are.Na (indie)", retailer:"grailed.com",
+    search_url:"https://www.grailed.com/shop?category=women&search=sheer+mesh+top",
+    aesthetics:["edgy","eclectic"], palettes:["neutrals","bold"], warmth_range:[62,90],
+    occasions:["night","concert","date"], colors:["#1B1418"], shape:"top-blouse" },
+  { id:"t14", category:"top", name:"Broderie anglaise blouse", brand:"Doen", retailer:"shopdoen.com",
+    search_url:"https://shopdoen.com/search?q=broderie+blouse",
+    aesthetics:["romantic"], palettes:["neutrals"], warmth_range:[60,88],
+    occasions:["date","dinner","gallery"], colors:["#F4EEDC"], shape:"top-blouse" },
+  { id:"t15", category:"top", name:"Boxy poplin shirt, white", brand:"Toteme", retailer:"toteme-studio.com",
+    search_url:"https://toteme-studio.com/search?q=poplin+shirt",
+    aesthetics:["minimalist","eclectic"], palettes:["neutrals"], warmth_range:[55,88],
+    occasions:["work","dinner","gallery"], colors:["#F4EEDC"], shape:"top-blouse" },
+  { id:"t16", category:"top", name:"Striped Breton long-sleeve", brand:"Saint James", retailer:"saintjamesboutique.com",
+    search_url:"https://www.saintjamesboutique.com/search?q=breton",
+    aesthetics:["minimalist","romantic","eclectic","preppy"], palettes:["neutrals","cool"], warmth_range:[45,72],
+    occasions:["casual","date"], colors:["#F4EEDC","#1E2A44"], shape:"top-tshirt" },
+  { id:"t17", category:"top", name:"Rugby polo, wide stripe", brand:"Aimé Leon Dore", retailer:"aimeleondore.com",
+    search_url:"https://www.aimeleondore.com/search?q=rugby",
+    aesthetics:["streetwear","eclectic","preppy"], palettes:["bold","neutrals"], warmth_range:[42,70],
+    occasions:["casual"], colors:["#B23A2E","#F4EEDC"], shape:"top-polo" },
+  { id:"t18", category:"top", name:"Slouchy cardigan, cream", brand:"Sézane", retailer:"sezane.com",
+    search_url:"https://www.sezane.com/us/search?q=cardigan",
+    aesthetics:["romantic","minimalist","eclectic","preppy"], palettes:["neutrals","earth"], warmth_range:[35,65],
+    occasions:["casual","date","dinner"], colors:["#F0E8CE"], shape:"top-cardigan" },
+  { id:"t19", category:"top", name:"Corseted bustier top, ivory", brand:"Miaou", retailer:"miaou.com",
+    search_url:"https://miaou.com/search?q=corset",
+    aesthetics:["edgy","romantic","eclectic"], palettes:["neutrals","bold"], warmth_range:[62,90],
+    occasions:["night","dinner","date"], colors:["#F4EEDC"], shape:"top-tank" },
+
+  // ---- BOTTOMS (10) ----
+  { id:"b7", category:"bottom", name:"Thermal-lined trouser, black", brand:"Uniqlo Heattech", retailer:"uniqlo.com",
+    search_url:"https://www.uniqlo.com/us/en/search?q=heattech+pants",
+    aesthetics:["minimalist","streetwear"], palettes:["neutrals","cool"], warmth_range:[10,50],
+    occasions:["casual","work"], colors:["#1B1418"], shape:"bottom-trousers" },
+  { id:"b8", category:"bottom", name:"Corduroy wide-leg, chocolate", brand:"Ganni", retailer:"ganni.com",
+    search_url:"https://www.ganni.com/en-us/search?q=corduroy+trouser",
+    aesthetics:["eclectic","romantic","minimalist"], palettes:["earth","neutrals"], warmth_range:[28,60],
+    occasions:["casual","date","gallery"], colors:["#5A3A22"], shape:"bottom-trousers" },
+  { id:"b9", category:"bottom", name:"Leather straight pant, black", brand:"Anine Bing", retailer:"aninebing.com",
+    search_url:"https://www.aninebing.com/search?q=leather+pant",
+    aesthetics:["edgy","minimalist"], palettes:["neutrals","bold"], warmth_range:[30,65],
+    occasions:["night","dinner","concert","date"], colors:["#1B1418"], shape:"bottom-trousers" },
+  { id:"b10", category:"bottom", name:"Denim mini skirt", brand:"Agolde", retailer:"agolde.com",
+    search_url:"https://agolde.com/search?q=denim+skirt",
+    aesthetics:["streetwear","romantic","eclectic"], palettes:["cool","neutrals"], warmth_range:[60,90],
+    occasions:["casual","date"], colors:["#4B5F7A"], shape:"bottom-skirt" },
+  { id:"b11", category:"bottom", name:"Sweatpants, heather grey", brand:"Entireworld", retailer:"entireworld.com",
+    search_url:"https://www.entireworld.com/search?q=sweatpant",
+    aesthetics:["streetwear","minimalist"], palettes:["neutrals","cool"], warmth_range:[35,68],
+    occasions:["casual"], colors:["#8C9099"], shape:"bottom-trousers" },
+  { id:"b12", category:"bottom", name:"Pleated wool trouser, ivory", brand:"Wardrobe.NYC", retailer:"wardrobe.nyc",
+    search_url:"https://wardrobe.nyc/search?q=pleated+trouser",
+    aesthetics:["minimalist","edgy","preppy"], palettes:["neutrals"], warmth_range:[30,65],
+    occasions:["work","dinner","gallery"], colors:["#F0E8CE"], shape:"bottom-trousers" },
+  { id:"b13", category:"bottom", name:"Satin bias skirt, wine", brand:"Reformation", retailer:"thereformation.com",
+    search_url:"https://www.thereformation.com/search?q=bias+satin+skirt",
+    aesthetics:["romantic","eclectic","edgy"], palettes:["bold","earth"], warmth_range:[55,85],
+    occasions:["dinner","night","wedding-guest","date"], colors:["#7A2A2E"], shape:"bottom-skirt" },
+  { id:"b14", category:"bottom", name:"Barrel-leg jean, ecru", brand:"Citizens of Humanity", retailer:"citizensofhumanity.com",
+    search_url:"https://www.citizensofhumanity.com/search?q=barrel+jean",
+    aesthetics:["eclectic","minimalist","streetwear"], palettes:["neutrals"], warmth_range:[38,80],
+    occasions:["casual","date","gallery"], colors:["#E4D3B0"], shape:"bottom-jean" },
+  { id:"b15", category:"bottom", name:"Track pant with side stripe", brand:"Adidas", retailer:"adidas.com",
+    search_url:"https://www.adidas.com/us/search?q=track+pant",
+    aesthetics:["streetwear","eclectic"], palettes:["neutrals","bold"], warmth_range:[40,72],
+    occasions:["casual"], colors:["#1B1418","#F4EEDC"], shape:"bottom-trousers" },
+  { id:"b16", category:"bottom", name:"Micro-shorts, black", brand:"Frankie Shop", retailer:"thefrankieshop.com",
+    search_url:"https://thefrankieshop.com/search?q=micro+shorts",
+    aesthetics:["edgy","streetwear"], palettes:["neutrals","bold"], warmth_range:[75,105],
+    occasions:["casual","night","date"], colors:["#1B1418"], shape:"bottom-shorts" },
+
+  // ---- DRESSES (5) ----
+  { id:"d4", category:"dress", name:"Long-sleeve knit dress, black", brand:"Khaite", retailer:"khaite.com",
+    search_url:"https://khaite.com/search?q=knit+dress",
+    aesthetics:["minimalist","edgy"], palettes:["neutrals"], warmth_range:[30,62],
+    occasions:["dinner","gallery","work","date"], colors:["#1B1418"], shape:"dress-column" },
+  { id:"d5", category:"dress", name:"Poplin shirtdress, blue stripe", brand:"Everlane", retailer:"everlane.com",
+    search_url:"https://www.everlane.com/search?q=shirtdress",
+    aesthetics:["minimalist","romantic","eclectic","preppy"], palettes:["cool","neutrals"], warmth_range:[62,92],
+    occasions:["casual","work","date"], colors:["#4B5F7A","#F4EEDC"], shape:"dress-column" },
+  { id:"d6", category:"dress", name:"Cottagecore prairie dress", brand:"Doen", retailer:"shopdoen.com",
+    search_url:"https://shopdoen.com/search?q=prairie+dress",
+    aesthetics:["romantic","eclectic"], palettes:["neutrals","earth"], warmth_range:[60,90],
+    occasions:["date","wedding-guest","dinner"], colors:["#F0E8CE","#6E7A45"], shape:"dress-prairie" },
+  { id:"d7", category:"dress", name:"Metallic mini, silver", brand:"Rotate", retailer:"rotatebirgerchristensen.com",
+    search_url:"https://rotatebirgerchristensen.com/search?q=metallic+mini",
+    aesthetics:["edgy","eclectic"], palettes:["cool","bold"], warmth_range:[62,90],
+    occasions:["night","concert","dinner"], colors:["#C7C7CD"], shape:"dress-slip" },
+  { id:"d8", category:"dress", name:"Draped jersey maxi, black", brand:"Norma Kamali", retailer:"normakamali.com",
+    search_url:"https://www.normakamali.com/search?q=jersey+maxi",
+    aesthetics:["minimalist","edgy","romantic"], palettes:["neutrals","bold"], warmth_range:[55,90],
+    occasions:["dinner","wedding-guest","gallery","date"], colors:["#1B1418"], shape:"dress-column" },
+
+  // ---- SHOES (8) ----
+  { id:"s6", category:"shoes", name:"Shearling-lined boot, black", brand:"Sorel", retailer:"sorel.com",
+    search_url:"https://www.sorel.com/search?q=shearling+boot",
+    aesthetics:["streetwear","minimalist","edgy"], palettes:["neutrals"], warmth_range:[-10,40],
+    occasions:["casual"], colors:["#1B1418"], shape:"shoe-boot" },
+  { id:"s7", category:"shoes", name:"Duck boot, waxed leather", brand:"L.L. Bean", retailer:"llbean.com",
+    search_url:"https://www.llbean.com/llb/search?q=bean+boot",
+    aesthetics:["streetwear","eclectic","minimalist"], palettes:["earth","neutrals"], warmth_range:[-10,45],
+    occasions:["casual"], colors:["#5A3A22"], shape:"shoe-boot" },
+  { id:"s8", category:"shoes", name:"Retro runner, cream", brand:"New Balance 990", retailer:"newbalance.com",
+    search_url:"https://www.newbalance.com/pd/990",
+    aesthetics:["streetwear","minimalist","eclectic"], palettes:["neutrals","cool"], warmth_range:[35,95],
+    occasions:["casual"], colors:["#E4D3B0","#8C9099"], shape:"shoe-sneaker" },
+  { id:"s9", category:"shoes", name:"Ballet flat, black patent", brand:"Repetto", retailer:"repetto.com",
+    search_url:"https://www.repetto.com/search?q=ballet+flat",
+    aesthetics:["romantic","minimalist","eclectic"], palettes:["neutrals"], warmth_range:[45,88],
+    occasions:["work","dinner","date","gallery"], colors:["#1B1418"], shape:"shoe-ballet" },
+  { id:"s10", category:"shoes", name:"Mesh mary jane, silver", brand:"Alaïa", retailer:"maison-alaia.com",
+    search_url:"https://www.maison-alaia.com/en-us/search?q=mesh+flat",
+    aesthetics:["edgy","eclectic","romantic"], palettes:["cool","neutrals","bold"], warmth_range:[55,88],
+    occasions:["dinner","gallery","date","night"], colors:["#C7C7CD"], shape:"shoe-ballet" },
+  { id:"s11", category:"shoes", name:"Platform clog, wood + black", brand:"No.6", retailer:"no6store.com",
+    search_url:"https://no6store.com/search?q=platform+clog",
+    aesthetics:["eclectic","romantic","edgy"], palettes:["earth","neutrals"], warmth_range:[40,85],
+    occasions:["casual","gallery","date"], colors:["#8A5A3B","#1B1418"], shape:"shoe-chunky" },
+  { id:"s12", category:"shoes", name:"Strappy heeled sandal, black", brand:"By Far", retailer:"byfar.com",
+    search_url:"https://byfar.com/search?q=strappy+sandal",
+    aesthetics:["edgy","romantic","eclectic"], palettes:["neutrals","bold"], warmth_range:[65,105],
+    occasions:["night","dinner","wedding-guest","date"], colors:["#1B1418"], shape:"shoe-heel" },
+  { id:"s13", category:"shoes", name:"Slide sandal, tan leather", brand:"Ancient Greek Sandals", retailer:"ancient-greek-sandals.com",
+    search_url:"https://ancient-greek-sandals.com/search?q=slide",
+    aesthetics:["minimalist","romantic","eclectic"], palettes:["earth","neutrals"], warmth_range:[72,110],
+    occasions:["casual","date"], colors:["#C9A57A"], shape:"shoe-sandal" },
+
+  // ---- OUTERWEAR (10) ----
+  { id:"o7", category:"outerwear", name:"Heavy wool overcoat, charcoal", brand:"Max Mara", retailer:"maxmara.com",
+    search_url:"https://us.maxmara.com/search?q=wool+overcoat",
+    aesthetics:["minimalist","edgy","romantic"], palettes:["neutrals","cool"], warmth_range:[-5,42],
+    occasions:["work","dinner","gallery","date"], colors:["#33383F"], shape:"outer-coat" },
+  { id:"o8", category:"outerwear", name:"Down puffer, matte black", brand:"Uniqlo Ultra Light", retailer:"uniqlo.com",
+    search_url:"https://www.uniqlo.com/us/en/search?q=ultra+light+down",
+    aesthetics:["streetwear","minimalist"], palettes:["neutrals"], warmth_range:[-10,40],
+    occasions:["casual"], colors:["#1B1418"], shape:"outer-puffer" },
+  { id:"o9", category:"outerwear", name:"Shearling-collar barn jacket", brand:"Alex Mill", retailer:"alexmill.com",
+    search_url:"https://www.alexmill.com/search?q=barn+jacket",
+    aesthetics:["eclectic","minimalist","streetwear"], palettes:["earth","neutrals"], warmth_range:[15,50],
+    occasions:["casual","gallery","date"], colors:["#5A3A22"], shape:"outer-barn" },
+  { id:"o10", category:"outerwear", name:"Long shearling coat, cream", brand:"Toteme", retailer:"toteme-studio.com",
+    search_url:"https://toteme-studio.com/search?q=shearling+coat",
+    aesthetics:["minimalist","romantic","eclectic"], palettes:["neutrals","earth"], warmth_range:[-5,38],
+    occasions:["dinner","gallery","date"], colors:["#F0E8CE"], shape:"outer-coat" },
+  { id:"o11", category:"outerwear", name:"Quilted liner jacket, olive", brand:"Barbour", retailer:"barbour.com",
+    search_url:"https://www.barbour.com/us/search?q=liddesdale",
+    aesthetics:["eclectic","minimalist","romantic","preppy"], palettes:["earth"], warmth_range:[35,58],
+    occasions:["casual","gallery","date"], colors:["#6E7A45"], shape:"outer-moto" },
+  { id:"o12", category:"outerwear", name:"Faux fur coat, cocoa", brand:"Stand Studio", retailer:"standstudio.com",
+    search_url:"https://www.standstudio.com/search?q=faux+fur+coat",
+    aesthetics:["eclectic","romantic","edgy"], palettes:["earth","neutrals"], warmth_range:[5,42],
+    occasions:["dinner","night","gallery","date"], colors:["#5A3A22"], shape:"outer-coat" },
+  { id:"o13", category:"outerwear", name:"Cropped puffer, silver", brand:"The North Face", retailer:"thenorthface.com",
+    search_url:"https://www.thenorthface.com/search?q=nuptse",
+    aesthetics:["streetwear","edgy","eclectic"], palettes:["cool","neutrals"], warmth_range:[-10,40],
+    occasions:["casual"], colors:["#C7C7CD"], shape:"outer-puffer" },
+  { id:"o14", category:"outerwear", name:"Longline cardigan coat, oatmeal", brand:"COS", retailer:"cos.com",
+    search_url:"https://www.cos.com/en_usd/search.html?q=knit+coat",
+    aesthetics:["minimalist","romantic"], palettes:["neutrals","earth"], warmth_range:[38,60],
+    occasions:["work","dinner","date","gallery"], colors:["#E4D3B0"], shape:"outer-coat" },
+  { id:"o15", category:"outerwear", name:"Waxed cotton anorak, navy", brand:"Filson", retailer:"filson.com",
+    search_url:"https://www.filson.com/search?q=waxed+jacket",
+    aesthetics:["streetwear","minimalist","eclectic"], palettes:["cool","earth"], warmth_range:[35,60],
+    occasions:["casual"], colors:["#1E2A44"], shape:"outer-shell" },
+  { id:"o16", category:"outerwear", name:"Wool-blend bomber, oxblood", brand:"AMI Paris", retailer:"amiparis.com",
+    search_url:"https://www.amiparis.com/us/search?q=bomber",
+    aesthetics:["streetwear","edgy","eclectic"], palettes:["bold","earth"], warmth_range:[38,62],
+    occasions:["casual","night","date"], colors:["#7A2A2E"], shape:"outer-bomber" },
+
+  // ---- HEADWEAR (5) ----
+  { id:"h4", category:"headwear", name:"Ribbed wool beanie, oatmeal", brand:"Le Bonnet", retailer:"lebonnet.com",
+    search_url:"https://lebonnet.com/search?q=beanie",
+    aesthetics:["streetwear","minimalist","eclectic"], palettes:["neutrals","earth"], warmth_range:[-10,50],
+    occasions:["casual"], colors:["#E4D3B0"], shape:"head-beret" },
+  { id:"h5", category:"headwear", name:"Bucket hat, corduroy", brand:"Kangol", retailer:"kangol.com",
+    search_url:"https://www.kangol.com/search?q=bucket+hat",
+    aesthetics:["streetwear","eclectic"], palettes:["earth","neutrals"], warmth_range:[40,90],
+    occasions:["casual"], colors:["#5A3A22"], shape:"head-cap" },
+  { id:"h6", category:"headwear", name:"Silk head scarf, floral", brand:"& Other Stories", retailer:"stories.com",
+    search_url:"https://www.stories.com/en_usd/search.html?q=silk+scarf",
+    aesthetics:["romantic","eclectic","preppy"], palettes:["bold","earth"], warmth_range:[55,95],
+    occasions:["casual","date","dinner"], colors:["#B23A2E","#D9A44F"], shape:"head-beret" },
+  { id:"h7", category:"headwear", name:"Newsboy cap, herringbone", brand:"Brixton", retailer:"brixton.com",
+    search_url:"https://www.brixton.com/search?q=newsboy",
+    aesthetics:["eclectic","romantic","preppy"], palettes:["cool","earth"], warmth_range:[35,68],
+    occasions:["casual","date","gallery"], colors:["#33383F"], shape:"head-cap" },
+  { id:"h8", category:"headwear", name:"Faux fur ushanka, black", brand:"UGG", retailer:"ugg.com",
+    search_url:"https://www.ugg.com/search?q=trapper+hat",
+    aesthetics:["eclectic","streetwear","edgy"], palettes:["neutrals"], warmth_range:[-15,32],
+    occasions:["casual"], colors:["#1B1418"], shape:"head-widebrim" },
+
+  // ---- JEWELRY (5) ----
+  { id:"j5", category:"jewelry", name:"Vintage brooch, pavé bar", brand:"Susan Alexandra", retailer:"susanalexandra.com",
+    search_url:"https://susanalexandra.com/search?q=brooch",
+    aesthetics:["eclectic","romantic"], palettes:["bold","neutrals"], warmth_range:[0,120],
+    occasions:["dinner","gallery","wedding-guest","date"], colors:["#C7C7CD","#D9A44F"], shape:"jew-ring" },
+  { id:"j6", category:"jewelry", name:"Silver cuff, brushed", brand:"Ariel Gordon", retailer:"arielgordonjewelry.com",
+    search_url:"https://arielgordonjewelry.com/search?q=cuff",
+    aesthetics:["minimalist","edgy","eclectic","streetwear"], palettes:["cool","neutrals"], warmth_range:[0,120],
+    occasions:["work","dinner","date","gallery","casual"], colors:["#B8B8BE"], shape:"jew-ring" },
+  { id:"j7", category:"jewelry", name:"Beaded charm necklace", brand:"Éliou", retailer:"eliou-eliou.com",
+    search_url:"https://eliou-eliou.com/search?q=beaded",
+    aesthetics:["romantic","eclectic"], palettes:["bold","earth"], warmth_range:[0,120],
+    occasions:["casual","date","dinner"], colors:["#D96B5A","#F0E8CE","#2A5F6E"], shape:"jew-chain" },
+  { id:"j8", category:"jewelry", name:"Tennis bracelet, gold + CZ", brand:"Mejuri", retailer:"mejuri.com",
+    search_url:"https://mejuri.com/search?q=tennis+bracelet",
+    aesthetics:["minimalist","romantic","eclectic"], palettes:["neutrals","bold"], warmth_range:[0,120],
+    occasions:["dinner","wedding-guest","date","gallery"], colors:["#D9A44F"], shape:"jew-chain" },
+  { id:"j9", category:"jewelry", name:"Cross pendant, oxidized silver", brand:"Werkstatt:München", retailer:"werkstatt-muenchen.com",
+    search_url:"https://werkstatt-muenchen.com/search?q=cross",
+    aesthetics:["edgy","eclectic","streetwear"], palettes:["neutrals","cool"], warmth_range:[0,120],
+    occasions:["night","concert","date","casual"], colors:["#4B4B50"], shape:"jew-chain" },
+  { id:"j10", category:"jewelry", name:"Chunky Cuban-link chain, silver", brand:"Miansai", retailer:"miansai.com",
+    search_url:"https://www.miansai.com/search?q=cuban+chain",
+    aesthetics:["streetwear","edgy"], palettes:["cool","neutrals"], warmth_range:[0,120],
+    occasions:["casual","night","concert","date"], colors:["#B8B8BE"], shape:"jew-chain" },
+  { id:"j11", category:"jewelry", name:"Statement signet ring, oversized", brand:"Tom Wood", retailer:"tomwoodproject.com",
+    search_url:"https://www.tomwoodproject.com/search?q=signet+ring",
+    aesthetics:["streetwear","edgy","minimalist"], palettes:["cool","neutrals","earth"], warmth_range:[0,120],
+    occasions:["casual","night","date","dinner"], colors:["#D9A44F"], shape:"jew-ring" },
+  { id:"j12", category:"jewelry", name:"Rope chain necklace, gold", brand:"David Yurman", retailer:"davidyurman.com",
+    search_url:"https://www.davidyurman.com/search?q=rope+chain",
+    aesthetics:["streetwear","eclectic","edgy"], palettes:["neutrals","earth","bold"], warmth_range:[0,120],
+    occasions:["casual","dinner","date","night"], colors:["#D9A44F"], shape:"jew-chain" },
+
+  // ---- BAGS (4) ----
+  { id:"g4", category:"bag", name:"Suede hobo, chocolate", brand:"The Row", retailer:"therow.com",
+    search_url:"https://www.therow.com/search?q=hobo",
+    aesthetics:["minimalist","romantic","eclectic"], palettes:["earth","neutrals"], warmth_range:[35,85],
+    occasions:["work","dinner","gallery","date"], colors:["#5A3A22"], shape:"bag-tote" },
+  { id:"g5", category:"bag", name:"Mini shoulder bag, silver metallic", brand:"Marge Sherwood", retailer:"margesherwood.com",
+    search_url:"https://margesherwood.com/search?q=mini+shoulder",
+    aesthetics:["eclectic","edgy","romantic"], palettes:["cool","neutrals"], warmth_range:[0,120],
+    occasions:["night","dinner","date"], colors:["#C7C7CD"], shape:"bag-cross" },
+  { id:"g6", category:"bag", name:"Canvas messenger, ecru", brand:"Filson", retailer:"filson.com",
+    search_url:"https://www.filson.com/search?q=messenger",
+    aesthetics:["streetwear","minimalist","eclectic"], palettes:["neutrals","earth"], warmth_range:[0,120],
+    occasions:["casual","work"], colors:["#E4D3B0"], shape:"bag-cross" },
+  { id:"g7", category:"bag", name:"Beaded evening minaudière", brand:"Cult Gaia", retailer:"cultgaia.com",
+    search_url:"https://cultgaia.com/search?q=minaudiere",
+    aesthetics:["romantic","eclectic","edgy"], palettes:["bold","neutrals"], warmth_range:[45,100],
+    occasions:["wedding-guest","dinner","night"], colors:["#F4EEDC","#D9A44F"], shape:"bag-cross" },
+
+  // ================ TRENDING EXPANSION ================
+  // Trends bias: silhouettes and colors that were building through 2025 into 2026.
+  // New palette accents introduced by these items: butter yellow, cherry red,
+  // chocolate brown, oxblood/burgundy, baby blue, sage, mocha, chrome silver.
+
+  // ---- TOPS: bows, peplum, sheer layers, cropped cardigans ----
+  { id:"t20", category:"top", name:"Bow-detail satin blouse, butter", brand:"Sandy Liang", retailer:"sandyliang.info",
+    search_url:"https://sandyliang.info/search?q=bow+blouse",
+    aesthetics:["romantic","eclectic"], palettes:["neutrals","earth"], warmth_range:[55,85],
+    occasions:["date","dinner","gallery"], colors:["#F0DFA0"], shape:"top-blouse" },
+  { id:"t21", category:"top", name:"Peplum-hem crewneck, chocolate", brand:"Cecilie Bahnsen", retailer:"ceciliebahnsen.com",
+    search_url:"https://ceciliebahnsen.com/search?q=peplum+top",
+    aesthetics:["romantic","eclectic"], palettes:["earth"], warmth_range:[45,72],
+    occasions:["date","dinner","gallery"], colors:["#4E322A"], shape:"top-blouse" },
+  { id:"t22", category:"top", name:"Sheer mesh long-sleeve, chocolate", brand:"Paloma Wool", retailer:"palomawool.com",
+    search_url:"https://palomawool.com/search?q=sheer+mesh",
+    aesthetics:["romantic","edgy","eclectic"], palettes:["earth"], warmth_range:[60,88],
+    occasions:["dinner","date","night","gallery"], colors:["#5A3A22"], shape:"top-blouse" },
+  { id:"t23", category:"top", name:"Cropped varsity cardigan, cherry", brand:"Ganni", retailer:"ganni.com",
+    search_url:"https://www.ganni.com/en-us/search?q=cropped+cardigan",
+    aesthetics:["romantic","eclectic","streetwear"], palettes:["bold","neutrals"], warmth_range:[45,72],
+    occasions:["casual","date","dinner"], colors:["#B01A2E"], shape:"top-cardigan" },
+  { id:"t24", category:"top", name:"Grandpa cardigan, oversized oatmeal", brand:"The Elder Statesman", retailer:"elder-statesman.com",
+    search_url:"https://elder-statesman.com/search?q=cardigan",
+    aesthetics:["minimalist","eclectic","romantic","streetwear","preppy"], palettes:["neutrals","earth"], warmth_range:[38,65],
+    occasions:["casual","date","gallery","work"], colors:["#E4D3B0"], shape:"top-cardigan" },
+  { id:"t25", category:"top", name:"Rosette-detail tank, cream", brand:"Simone Rocha", retailer:"simonerocha.com",
+    search_url:"https://simonerocha.com/search?q=rosette",
+    aesthetics:["romantic","eclectic"], palettes:["neutrals"], warmth_range:[65,92],
+    occasions:["date","dinner","wedding-guest","gallery"], colors:["#F4EEDC"], shape:"top-tank" },
+  { id:"t26", category:"top", name:"Lace-trim camisole, baby blue", brand:"Reformation", retailer:"thereformation.com",
+    search_url:"https://www.thereformation.com/search?q=lace+camisole",
+    aesthetics:["romantic","eclectic"], palettes:["cool","neutrals"], warmth_range:[65,92],
+    occasions:["date","dinner","night"], colors:["#B8CFE0"], shape:"top-tank" },
+  { id:"t27", category:"top", name:"Cropped baby tee, mocha", brand:"Éterne", retailer:"eterne.co",
+    search_url:"https://eterne.co/search?q=baby+tee",
+    aesthetics:["streetwear","minimalist","romantic"], palettes:["earth","neutrals"], warmth_range:[62,95],
+    occasions:["casual","date"], colors:["#8A6A55"], shape:"top-tshirt" },
+  { id:"t28", category:"top", name:"Boat-neck striped tee, sage/cream", brand:"Loulou Studio", retailer:"louloustudio.com",
+    search_url:"https://louloustudio.com/search?q=striped+tee",
+    aesthetics:["minimalist","romantic","eclectic"], palettes:["earth","neutrals"], warmth_range:[55,85],
+    occasions:["casual","date","gallery"], colors:["#A5B098","#F4EEDC"], shape:"top-tshirt" },
+  { id:"t29", category:"top", name:"Silk halter blouse, oxblood", brand:"Khaite", retailer:"khaite.com",
+    search_url:"https://khaite.com/search?q=halter",
+    aesthetics:["minimalist","edgy","eclectic"], palettes:["bold","earth"], warmth_range:[62,90],
+    occasions:["dinner","night","date","gallery"], colors:["#5C1A20"], shape:"top-tank" },
+
+  // ---- BOTTOMS: capris, bermudas, barrel jeans, suede skirts ----
+  { id:"b17", category:"bottom", name:"Capri pants, black", brand:"Wardrobe.NYC", retailer:"wardrobe.nyc",
+    search_url:"https://wardrobe.nyc/search?q=capri",
+    aesthetics:["minimalist","edgy","eclectic"], palettes:["neutrals"], warmth_range:[58,90],
+    occasions:["dinner","date","gallery","work"], colors:["#1B1418"], shape:"bottom-trousers" },
+  { id:"b18", category:"bottom", name:"Bermuda short, chocolate suede", brand:"Nanushka", retailer:"nanushka.com",
+    search_url:"https://nanushka.com/search?q=bermuda",
+    aesthetics:["eclectic","minimalist","romantic"], palettes:["earth"], warmth_range:[62,88],
+    occasions:["casual","date","gallery"], colors:["#5A3A22"], shape:"bottom-shorts" },
+  { id:"b19", category:"bottom", name:"Barrel jean, dark indigo", brand:"Agolde", retailer:"agolde.com",
+    search_url:"https://agolde.com/search?q=barrel+jean",
+    aesthetics:["streetwear","eclectic","minimalist"], palettes:["cool"], warmth_range:[38,80],
+    occasions:["casual","date"], colors:["#1E2A44"], shape:"bottom-jean" },
+  { id:"b20", category:"bottom", name:"Suede maxi skirt, cognac", brand:"Chloé", retailer:"chloe.com",
+    search_url:"https://www.chloe.com/us/search?q=suede+skirt",
+    aesthetics:["romantic","eclectic","minimalist"], palettes:["earth"], warmth_range:[50,82],
+    occasions:["date","dinner","gallery","wedding-guest"], colors:["#8A5A3B"], shape:"bottom-skirt" },
+  { id:"b21", category:"bottom", name:"Sequin mini skirt, silver", brand:"Rotate", retailer:"rotatebirgerchristensen.com",
+    search_url:"https://rotatebirgerchristensen.com/search?q=sequin+skirt",
+    aesthetics:["eclectic","edgy","romantic"], palettes:["cool","bold"], warmth_range:[60,90],
+    occasions:["night","concert","dinner","wedding-guest"], colors:["#C7C7CD"], shape:"bottom-skirt" },
+  { id:"b22", category:"bottom", name:"Tailored bermuda, butter", brand:"Frankie Shop", retailer:"thefrankieshop.com",
+    search_url:"https://thefrankieshop.com/search?q=bermuda",
+    aesthetics:["minimalist","eclectic","streetwear"], palettes:["neutrals"], warmth_range:[62,90],
+    occasions:["casual","work","date"], colors:["#F0DFA0"], shape:"bottom-shorts" },
+  { id:"b23", category:"bottom", name:"Tiered boho maxi skirt, ecru", brand:"Doen", retailer:"shopdoen.com",
+    search_url:"https://shopdoen.com/search?q=tiered+skirt",
+    aesthetics:["romantic","eclectic"], palettes:["neutrals","earth"], warmth_range:[58,88],
+    occasions:["date","dinner","gallery","wedding-guest"], colors:["#F0E8CE"], shape:"bottom-pleated" },
+  { id:"b24", category:"bottom", name:"Wide-leg linen trouser, sage", brand:"Faithfull the Brand", retailer:"faithfullthebrand.com",
+    search_url:"https://faithfullthebrand.com/search?q=linen+trouser",
+    aesthetics:["romantic","minimalist","eclectic"], palettes:["earth"], warmth_range:[65,95],
+    occasions:["casual","date","gallery"], colors:["#A5B098"], shape:"bottom-trousers" },
+
+  // ---- DRESSES: boho tiered, bow-strap, sheer lace, cherry halter ----
+  { id:"d9", category:"dress", name:"Tiered boho maxi, ivory + tan trim", brand:"Chloé", retailer:"chloe.com",
+    search_url:"https://www.chloe.com/us/search?q=boho+dress",
+    aesthetics:["romantic","eclectic"], palettes:["neutrals","earth"], warmth_range:[62,95],
+    occasions:["wedding-guest","date","dinner"], colors:["#F0E8CE","#C9A57A"], shape:"dress-slip" },
+  { id:"d10", category:"dress", name:"Bow-strap slip dress, butter", brand:"Sandy Liang", retailer:"sandyliang.info",
+    search_url:"https://sandyliang.info/search?q=slip+dress",
+    aesthetics:["romantic","eclectic"], palettes:["neutrals"], warmth_range:[65,92],
+    occasions:["date","dinner","wedding-guest"], colors:["#F0DFA0"], shape:"dress-slip" },
+  { id:"d11", category:"dress", name:"Sheer lace maxi, black", brand:"Simone Rocha", retailer:"simonerocha.com",
+    search_url:"https://simonerocha.com/search?q=lace+dress",
+    aesthetics:["romantic","edgy","eclectic"], palettes:["neutrals"], warmth_range:[60,88],
+    occasions:["night","dinner","wedding-guest","gallery"], colors:["#1B1418"], shape:"dress-column" },
+  { id:"d12", category:"dress", name:"Halter mini, cherry red", brand:"Réalisation Par", retailer:"realisationpar.com",
+    search_url:"https://realisationpar.com/search?q=halter+dress",
+    aesthetics:["eclectic","romantic","edgy"], palettes:["bold"], warmth_range:[68,95],
+    occasions:["date","dinner","night","wedding-guest"], colors:["#B01A2E"], shape:"dress-slip" },
+
+  // ---- SHOES: bow flats, boat shoes, Gazelles, kitten mules, suede boots, fisherman sandals ----
+  { id:"s14", category:"shoes", name:"Ballet flat with bow, cream mesh", brand:"Alaïa", retailer:"maison-alaia.com",
+    search_url:"https://www.maison-alaia.com/en-us/search?q=ballet+bow",
+    aesthetics:["romantic","minimalist","eclectic"], palettes:["neutrals"], warmth_range:[50,88],
+    occasions:["work","dinner","date","gallery"], colors:["#F4EEDC"], shape:"shoe-ballet" },
+  { id:"s15", category:"shoes", name:"Boat shoe, tan leather", brand:"Sperry", retailer:"sperry.com",
+    search_url:"https://www.sperry.com/search?q=authentic+original",
+    aesthetics:["streetwear","minimalist","eclectic","romantic","preppy"], palettes:["earth","neutrals"], warmth_range:[55,95],
+    occasions:["casual","date","gallery"], colors:["#8A5A3B"], shape:"shoe-loafer" },
+  { id:"s16", category:"shoes", name:"Gazelle sneaker, cherry", brand:"Adidas", retailer:"adidas.com",
+    search_url:"https://www.adidas.com/us/search?q=gazelle",
+    aesthetics:["streetwear","eclectic","romantic"], palettes:["bold","neutrals"], warmth_range:[40,95],
+    occasions:["casual","date"], colors:["#B01A2E","#F4EEDC"], shape:"shoe-sneaker" },
+  { id:"s17", category:"shoes", name:"Kitten-heel mule, oxblood suede", brand:"Loeffler Randall", retailer:"loefflerrandall.com",
+    search_url:"https://www.loefflerrandall.com/search?q=kitten+mule",
+    aesthetics:["romantic","minimalist","eclectic"], palettes:["bold","earth"], warmth_range:[55,88],
+    occasions:["dinner","gallery","date","work"], colors:["#5C1A20"], shape:"shoe-mule" },
+  { id:"s18", category:"shoes", name:"Slouchy suede boot, chocolate", brand:"Isabel Marant", retailer:"isabelmarant.com",
+    search_url:"https://www.isabelmarant.com/us/search?q=suede+boot",
+    aesthetics:["romantic","eclectic","edgy"], palettes:["earth"], warmth_range:[25,60],
+    occasions:["casual","date","dinner","gallery"], colors:["#5A3A22"], shape:"shoe-boot" },
+  { id:"s19", category:"shoes", name:"Fisherman sandal, tan", brand:"Aeyde", retailer:"aeyde.com",
+    search_url:"https://aeyde.com/search?q=fisherman+sandal",
+    aesthetics:["minimalist","romantic","eclectic"], palettes:["earth","neutrals"], warmth_range:[68,105],
+    occasions:["casual","date","gallery"], colors:["#C9A57A"], shape:"shoe-sandal" },
+
+  // ---- OUTERWEAR: barn jackets, suede coats, cropped bombers, capes, chrome puffers ----
+  { id:"o17", category:"outerwear", name:"Barn jacket, waxed olive", brand:"Barbour", retailer:"barbour.com",
+    search_url:"https://www.barbour.com/us/search?q=beaufort",
+    aesthetics:["minimalist","eclectic","streetwear","romantic","preppy"], palettes:["earth"], warmth_range:[35,62],
+    occasions:["casual","date","gallery"], colors:["#4A5232"], shape:"outer-moto" },
+  { id:"o18", category:"outerwear", name:"Suede car coat, cognac", brand:"Isabel Marant Étoile", retailer:"isabelmarant.com",
+    search_url:"https://www.isabelmarant.com/us/search?q=suede+coat",
+    aesthetics:["romantic","eclectic","minimalist"], palettes:["earth"], warmth_range:[35,58],
+    occasions:["date","dinner","gallery"], colors:["#8A5A3B"], shape:"outer-coat" },
+  { id:"o19", category:"outerwear", name:"Cropped satin bomber, butter", brand:"KHY", retailer:"khy.com",
+    search_url:"https://khy.com/search?q=bomber",
+    aesthetics:["streetwear","eclectic","edgy"], palettes:["neutrals","bold"], warmth_range:[42,68],
+    occasions:["casual","night","date"], colors:["#F0DFA0"], shape:"outer-moto" },
+  { id:"o20", category:"outerwear", name:"Cape coat, sage wool", brand:"Massimo Dutti", retailer:"massimodutti.com",
+    search_url:"https://www.massimodutti.com/us/search?q=cape+coat",
+    aesthetics:["romantic","minimalist","eclectic"], palettes:["earth","neutrals"], warmth_range:[28,55],
+    occasions:["dinner","gallery","date","wedding-guest"], colors:["#A5B098"], shape:"outer-coat" },
+  { id:"o21", category:"outerwear", name:"Long trench, chocolate", brand:"Toteme", retailer:"toteme-studio.com",
+    search_url:"https://toteme-studio.com/search?q=long+trench",
+    aesthetics:["minimalist","edgy","romantic"], palettes:["earth"], warmth_range:[42,66],
+    occasions:["work","gallery","date","dinner"], colors:["#4E322A"], shape:"outer-trench" },
+  { id:"o22", category:"outerwear", name:"Metallic puffer, chrome silver", brand:"Rains", retailer:"rains.com",
+    search_url:"https://www.rains.com/search?q=puffer",
+    aesthetics:["streetwear","edgy","eclectic"], palettes:["cool"], warmth_range:[-5,40],
+    occasions:["casual","night"], colors:["#C7C7CD"], shape:"outer-shell" },
+
+  // ---- HEADWEAR: velvet bow, printed silk scarf ----
+  { id:"h9", category:"headwear", name:"Bow headband, black velvet", brand:"Jennifer Behr", retailer:"jenniferbehr.com",
+    search_url:"https://www.jenniferbehr.com/search?q=bow+headband",
+    aesthetics:["romantic","eclectic"], palettes:["neutrals","bold"], warmth_range:[40,95],
+    occasions:["date","dinner","wedding-guest","gallery"], colors:["#1B1418"], shape:"head-beret" },
+  { id:"h10", category:"headwear", name:"Silk scarf, printed brown/cream", brand:"Hermès (vintage)", retailer:"grailed.com",
+    search_url:"https://www.grailed.com/shop?category=women&search=hermes+silk+scarf",
+    aesthetics:["romantic","eclectic","minimalist"], palettes:["earth","neutrals"], warmth_range:[45,95],
+    occasions:["date","dinner","gallery"], colors:["#5A3A22","#F0E8CE"], shape:"head-beret" },
+
+  // ---- JEWELRY: pearl+chain hybrid, bow charm ----
+  { id:"j13", category:"jewelry", name:"Pearl + chain hybrid necklace", brand:"Jenny Bird", retailer:"jenny-bird.com",
+    search_url:"https://www.jenny-bird.com/search?q=pearl+chain",
+    aesthetics:["romantic","minimalist","eclectic"], palettes:["neutrals","earth"], warmth_range:[0,120],
+    occasions:["date","dinner","gallery","work"], colors:["#F4EEDC","#D9A44F"], shape:"jew-chain" },
+  { id:"j14", category:"jewelry", name:"Bow charm necklace, gold", brand:"Ben-Amun", retailer:"ben-amun.com",
+    search_url:"https://ben-amun.com/search?q=bow+necklace",
+    aesthetics:["romantic","eclectic"], palettes:["neutrals","earth"], warmth_range:[0,120],
+    occasions:["date","dinner","wedding-guest"], colors:["#D9A44F"], shape:"jew-chain" },
+
+  // ---- BAGS: fringed suede hobo, butter phone-strap, chocolate suede tote ----
+  { id:"g8", category:"bag", name:"Suede fringed hobo, cognac", brand:"Chloé", retailer:"chloe.com",
+    search_url:"https://www.chloe.com/us/search?q=fringed+hobo",
+    aesthetics:["romantic","eclectic"], palettes:["earth"], warmth_range:[45,95],
+    occasions:["casual","date","dinner","gallery"], colors:["#8A5A3B"], shape:"bag-tote" },
+  { id:"g9", category:"bag", name:"Phone-strap crossbody, butter leather", brand:"Bottega Veneta", retailer:"bottegaveneta.com",
+    search_url:"https://www.bottegaveneta.com/en-us/search?q=phone+bag",
+    aesthetics:["minimalist","eclectic","romantic"], palettes:["neutrals"], warmth_range:[0,120],
+    occasions:["casual","date","dinner","night"], colors:["#F0DFA0"], shape:"bag-cross" },
+  { id:"g10", category:"bag", name:"Oversized tote, chocolate suede", brand:"The Row", retailer:"therow.com",
+    search_url:"https://www.therow.com/search?q=oversized+tote",
+    aesthetics:["minimalist","eclectic","romantic"], palettes:["earth"], warmth_range:[35,90],
+    occasions:["work","gallery","casual"], colors:["#4E322A"], shape:"bag-tote" },
+
+  // ================ ONEPIECE: jumpsuits, rompers, overalls ================
+  { id:"op1", category:"onepiece", name:"Wide-leg jumpsuit, black crepe", brand:"Norma Kamali", retailer:"normakamali.com",
+    search_url:"https://www.normakamali.com/search?q=jumpsuit",
+    aesthetics:["minimalist","edgy","eclectic"], palettes:["neutrals"], warmth_range:[55,88],
+    occasions:["dinner","gallery","wedding-guest","work"], colors:["#1B1418"], shape:"onepiece-jumpsuit" },
+  { id:"op2", category:"onepiece", name:"Utility jumpsuit, olive", brand:"Alex Mill", retailer:"alexmill.com",
+    search_url:"https://www.alexmill.com/search?q=jumpsuit",
+    aesthetics:["streetwear","minimalist","eclectic"], palettes:["earth"], warmth_range:[55,85],
+    occasions:["casual","gallery"], colors:["#5F5A3E"], shape:"onepiece-jumpsuit" },
+  { id:"op3", category:"onepiece", name:"Linen romper, butter", brand:"Faithfull the Brand", retailer:"faithfullthebrand.com",
+    search_url:"https://faithfullthebrand.com/search?q=romper",
+    aesthetics:["romantic","eclectic","preppy"], palettes:["neutrals","earth"], warmth_range:[70,105],
+    occasions:["casual","date"], colors:["#F0DFA0"], shape:"onepiece-romper" },
+  { id:"op4", category:"onepiece", name:"Cotton overalls, indigo", brand:"Madewell", retailer:"madewell.com",
+    search_url:"https://www.madewell.com/search?q=overalls",
+    aesthetics:["streetwear","romantic","eclectic","preppy"], palettes:["cool","neutrals"], warmth_range:[52,82],
+    occasions:["casual","date"], colors:["#4B5F7A"], shape:"onepiece-overalls" },
+  { id:"op5", category:"onepiece", name:"Halter jumpsuit, oxblood satin", brand:"Reformation", retailer:"thereformation.com",
+    search_url:"https://www.thereformation.com/search?q=jumpsuit",
+    aesthetics:["romantic","edgy","eclectic"], palettes:["bold","earth"], warmth_range:[62,92],
+    occasions:["dinner","night","wedding-guest","date"], colors:["#5C1A20"], shape:"onepiece-jumpsuit" },
+  { id:"op6", category:"onepiece", name:"Tailored short romper, cream", brand:"Sézane", retailer:"sezane.com",
+    search_url:"https://www.sezane.com/us/search?q=romper",
+    aesthetics:["romantic","minimalist","preppy"], palettes:["neutrals"], warmth_range:[65,95],
+    occasions:["casual","date","dinner","gallery"], colors:["#F4EEDC"], shape:"onepiece-romper" },
+
+  // ================ TRENDING SHOES: platforms, chunky, current NBs ================
+  { id:"s20", category:"shoes", name:"Chunky lug loafer, black", brand:"Prada", retailer:"prada.com",
+    search_url:"https://www.prada.com/us/en/search?q=chunky+loafer",
+    aesthetics:["edgy","preppy","minimalist","eclectic"], palettes:["neutrals"], warmth_range:[38,90],
+    occasions:["work","dinner","gallery","date","casual"], colors:["#1B1418"], shape:"shoe-chunky" }, // trend: chunky loafers stayed hot
+  { id:"s21", category:"shoes", name:"Platform penny loafer, oxblood", brand:"Miu Miu", retailer:"miumiu.com",
+    search_url:"https://www.miumiu.com/us/en/search?q=platform+loafer",
+    aesthetics:["preppy","romantic","eclectic"], palettes:["bold","earth"], warmth_range:[38,88],
+    occasions:["dinner","gallery","date","work"], colors:["#5C1A20"], shape:"shoe-chunky" }, // trend: Miu Miu tenniscore
+  { id:"s22", category:"shoes", name:"New Balance 550, cream/green", brand:"New Balance", retailer:"newbalance.com",
+    search_url:"https://www.newbalance.com/pd/550",
+    aesthetics:["streetwear","preppy","eclectic","minimalist"], palettes:["neutrals","earth"], warmth_range:[38,95],
+    occasions:["casual","date"], colors:["#F4EEDC","#2E4A38"], shape:"shoe-runner" }, // trend: NB 550 became ubiquitous
+  { id:"s23", category:"shoes", name:"New Balance 2002R, mushroom", brand:"New Balance", retailer:"newbalance.com",
+    search_url:"https://www.newbalance.com/pd/2002r",
+    aesthetics:["streetwear","minimalist","eclectic"], palettes:["neutrals","earth"], warmth_range:[35,90],
+    occasions:["casual"], colors:["#B8AA95"], shape:"shoe-runner" }, // trend: NB 2002R gorpcore staple
+  { id:"s24", category:"shoes", name:"Salomon XT-6, silver/black", brand:"Salomon", retailer:"salomon.com",
+    search_url:"https://www.salomon.com/en-us/search?q=xt-6",
+    aesthetics:["streetwear","edgy","eclectic"], palettes:["cool","neutrals"], warmth_range:[30,85],
+    occasions:["casual"], colors:["#C7C7CD","#1B1418"], shape:"shoe-runner" }, // trend: Salomons + techwear
+  { id:"s25", category:"shoes", name:"Mary Jane flat, black patent", brand:"Miu Miu", retailer:"miumiu.com",
+    search_url:"https://www.miumiu.com/us/en/search?q=mary+jane",
+    aesthetics:["romantic","preppy","eclectic","edgy"], palettes:["neutrals"], warmth_range:[45,88],
+    occasions:["work","dinner","date","gallery","wedding-guest"], colors:["#1B1418"], shape:"shoe-ballet" }, // trend: Mary Janes
+  { id:"s26", category:"shoes", name:"Jelly flat sandal, clear", brand:"The Row", retailer:"therow.com",
+    search_url:"https://www.therow.com/search?q=jelly",
+    aesthetics:["minimalist","eclectic","romantic"], palettes:["neutrals"], warmth_range:[72,105],
+    occasions:["casual","date"], colors:["#DDD8CC"], shape:"shoe-sandal" }, // trend: jelly flats
+  { id:"s27", category:"shoes", name:"Chunky Chelsea boot, black", brand:"Alexander McQueen", retailer:"alexandermcqueen.com",
+    search_url:"https://www.alexandermcqueen.com/en-us/search?q=chelsea+boot",
+    aesthetics:["edgy","eclectic","minimalist"], palettes:["neutrals"], warmth_range:[15,58],
+    occasions:["night","concert","date","casual","dinner"], colors:["#1B1418"], shape:"shoe-boot" }, // trend: platform Chelseas
+  { id:"s28", category:"shoes", name:"Adidas SL 72, blue/yellow", brand:"Adidas", retailer:"adidas.com",
+    search_url:"https://www.adidas.com/us/search?q=sl+72",
+    aesthetics:["streetwear","eclectic","preppy"], palettes:["cool","bold"], warmth_range:[42,95],
+    occasions:["casual","date"], colors:["#4B5F7A","#F0DFA0"], shape:"shoe-runner" }, // trend: retro runners
+  { id:"s29", category:"shoes", name:"Platform sandal, black lug", brand:"Prada", retailer:"prada.com",
+    search_url:"https://www.prada.com/us/en/search?q=platform+sandal",
+    aesthetics:["edgy","eclectic","streetwear"], palettes:["neutrals"], warmth_range:[68,105],
+    occasions:["casual","night","date"], colors:["#1B1418"], shape:"shoe-chunky" }, // trend: chunky sandals
+
+  // ================ NEW ACCESSORY CATEGORIES ================
+  // scarf (winter warmth or light neck), gloves (winter), sunglasses (year-round),
+  // neck (silk scarf / tie), plus bandana as headwear.
+
+  // ---- SCARVES: heavy winter + light neck ----
+  { id:"sc1", category:"scarf", name:"Chunky wool scarf, oatmeal", brand:"Acne Studios", retailer:"acnestudios.com",
+    search_url:"https://www.acnestudios.com/us/en/search?q=wool+scarf",
+    aesthetics:["minimalist","edgy","streetwear","preppy","romantic"], palettes:["neutrals","earth"], warmth_range:[-15,45],
+    occasions:["casual","work","dinner","gallery","date"], colors:["#E4D3B0"], shape:"scarf-winter" },
+  { id:"sc2", category:"scarf", name:"Cashmere scarf, charcoal", brand:"Naadam", retailer:"naadam.co",
+    search_url:"https://naadam.co/search?q=cashmere+scarf",
+    aesthetics:["minimalist","edgy","preppy"], palettes:["neutrals","cool"], warmth_range:[-10,48],
+    occasions:["work","dinner","gallery","date"], colors:["#33383F"], shape:"scarf-winter" },
+  { id:"sc3", category:"scarf", name:"Cable-knit scarf, cherry red", brand:"Sporty & Rich", retailer:"sportyandrich.com",
+    search_url:"https://sportyandrich.com/search?q=knit+scarf",
+    aesthetics:["preppy","streetwear","eclectic","romantic"], palettes:["bold","neutrals"], warmth_range:[-10,45],
+    occasions:["casual","date"], colors:["#B01A2E"], shape:"scarf-winter" },
+  { id:"sc4", category:"scarf", name:"Plaid blanket scarf, forest/cream", brand:"Acne Studios", retailer:"acnestudios.com",
+    search_url:"https://www.acnestudios.com/us/en/search?q=plaid+scarf",
+    aesthetics:["preppy","eclectic","romantic","minimalist"], palettes:["earth","neutrals","cool"], warmth_range:[-10,48],
+    occasions:["casual","date","gallery"], colors:["#1E3A2E","#F4EEDC"], shape:"scarf-winter" },
+  { id:"sc5", category:"scarf", name:"Lightweight linen scarf, sage", brand:"& Other Stories", retailer:"stories.com",
+    search_url:"https://www.stories.com/en_usd/search.html?q=linen+scarf",
+    aesthetics:["romantic","minimalist","eclectic"], palettes:["earth","neutrals"], warmth_range:[50,78],
+    occasions:["casual","date","gallery"], colors:["#A5B098"], shape:"scarf-light" },
+
+  // ---- NECK ACCESSORIES: silk scarves, bandanas, ties ----
+  { id:"n1", category:"neck", name:"Silk twilly, printed floral", brand:"Hermès (vintage)", retailer:"grailed.com",
+    search_url:"https://www.grailed.com/shop?category=women&search=hermes+twilly",
+    aesthetics:["romantic","preppy","eclectic"], palettes:["bold","earth","neutrals"], warmth_range:[45,100],
+    occasions:["work","dinner","date","gallery"], colors:["#D9A44F","#B23A2E"], shape:"neck-scarf" },
+  { id:"n2", category:"neck", name:"Silk neckerchief, cream/navy", brand:"& Other Stories", retailer:"stories.com",
+    search_url:"https://www.stories.com/en_usd/search.html?q=neckerchief",
+    aesthetics:["preppy","romantic","minimalist","eclectic"], palettes:["neutrals","cool"], warmth_range:[45,100],
+    occasions:["casual","work","date","dinner"], colors:["#F4EEDC","#1E2A44"], shape:"neck-scarf" },
+  { id:"n3", category:"neck", name:"Cotton bandana, black paisley", brand:"RRL Ralph Lauren", retailer:"ralphlauren.com",
+    search_url:"https://www.ralphlauren.com/search?q=bandana",
+    aesthetics:["streetwear","edgy","eclectic"], palettes:["neutrals","cool"], warmth_range:[50,105],
+    occasions:["casual","night","concert","date"], colors:["#1B1418"], shape:"bandana" },
+  { id:"n4", category:"neck", name:"Skinny tie, black satin", brand:"Saint Laurent", retailer:"ysl.com",
+    search_url:"https://www.ysl.com/en-us/search?q=tie",
+    aesthetics:["edgy","minimalist"], palettes:["neutrals"], warmth_range:[35,90],
+    occasions:["night","dinner","concert","work"], colors:["#1B1418"], shape:"neck-tie" },
+  { id:"n5", category:"neck", name:"Wide silk tie, oxblood", brand:"Drake's", retailer:"drakes.com",
+    search_url:"https://www.drakes.com/search?q=tie",
+    aesthetics:["preppy","eclectic"], palettes:["bold","earth"], warmth_range:[35,90],
+    occasions:["work","dinner","wedding-guest"], colors:["#5C1A20"], shape:"neck-tie" },
+
+  // ---- GLOVES: winter-only ----
+  { id:"gl1", category:"gloves", name:"Leather gloves, cashmere-lined black", brand:"Aris Gloves", retailer:"arisgloves.com",
+    search_url:"https://arisgloves.com/search?q=cashmere+lined",
+    aesthetics:["minimalist","edgy","preppy","romantic"], palettes:["neutrals"], warmth_range:[-15,40],
+    occasions:["work","dinner","gallery","date","casual"], colors:["#1B1418"], shape:"gloves" },
+  { id:"gl2", category:"gloves", name:"Knit gloves, oatmeal", brand:"Uniqlo Heattech", retailer:"uniqlo.com",
+    search_url:"https://www.uniqlo.com/us/en/search?q=heattech+glove",
+    aesthetics:["minimalist","streetwear","preppy"], palettes:["neutrals","earth"], warmth_range:[-15,42],
+    occasions:["casual"], colors:["#E4D3B0"], shape:"gloves" },
+  { id:"gl3", category:"gloves", name:"Leather driving gloves, cognac", brand:"Hestra", retailer:"hestragloves.com",
+    search_url:"https://www.hestragloves.com/search?q=driving+glove",
+    aesthetics:["preppy","minimalist","eclectic"], palettes:["earth","neutrals"], warmth_range:[25,55],
+    occasions:["casual","work","date","gallery"], colors:["#8A5A3B"], shape:"gloves" },
+
+  // ---- SUNGLASSES ----
+  { id:"su1", category:"sunglasses", name:"Black cat-eye acetate", brand:"Celine", retailer:"celine.com",
+    search_url:"https://www.celine.com/en-us/search?q=sunglasses",
+    aesthetics:["minimalist","edgy","romantic","eclectic"], palettes:["neutrals"], warmth_range:[45,120],
+    occasions:["casual","dinner","date","gallery"], colors:["#1B1418"], shape:"sunglasses" },
+  { id:"su2", category:"sunglasses", name:"Wire aviators, gold", brand:"Ray-Ban", retailer:"ray-ban.com",
+    search_url:"https://www.ray-ban.com/usa/search?q=aviator",
+    aesthetics:["streetwear","eclectic","preppy","minimalist"], palettes:["neutrals","earth"], warmth_range:[45,120],
+    occasions:["casual","date"], colors:["#D9A44F"], shape:"sunglasses" },
+  { id:"su3", category:"sunglasses", name:"Oversized square, tortoise", brand:"Miu Miu", retailer:"miumiu.com",
+    search_url:"https://www.miumiu.com/us/en/search?q=sunglasses",
+    aesthetics:["romantic","preppy","eclectic"], palettes:["earth","neutrals"], warmth_range:[45,120],
+    occasions:["casual","date","gallery","dinner"], colors:["#5A3A22"], shape:"sunglasses" },
+  { id:"su4", category:"sunglasses", name:"Sporty wraparound, silver mirror", brand:"Oakley", retailer:"oakley.com",
+    search_url:"https://www.oakley.com/en-us/search?q=sunglasses",
+    aesthetics:["streetwear","edgy","eclectic"], palettes:["cool"], warmth_range:[55,120],
+    occasions:["casual"], colors:["#C7C7CD"], shape:"sunglasses" },
+];
+
+/* -------------------- OPTIONS DATA -------------------- */
+
+/* ============ AESTHETIC PREVIEW IMAGES ============
+   Real flatlay photos from Unsplash's CDN. If any URL fails to load,
+   the preview cleanly falls back to the SVG silhouette stack via onerror.
+   To swap: replace the `image` URL with any direct-to-CDN image URL
+   (e.g. from your own Unsplash search or Pinterest source view).
+   ================================================== */
+const AESTHETICS = [
+  { id:"minimalist",
+    name:"Minimalist / <em>Quiet Luxury</em>",
+    sub:"clean lines · tailored · elevated basics",
+    image:"aesthetic-minimalist.jpg",
+    preview:{ shapes:["top-blouse","bottom-trousers","shoe-loafer"], colors:["#F4EEDC","#1B1418","#C9A57A"] } },
+  { id:"streetwear",
+    name:"Streetwear / <em>Casual</em>",
+    sub:"oversized · sneakers · sporty",
+    image:"aesthetic-streetwear.jpg",
+    preview:{ shapes:["top-hoodie","bottom-jean","shoe-sneaker"], colors:["#8A867A","#4B5F7A","#F4EEDC"] } },
+  { id:"romantic",
+    name:"Romantic / <em>Soft</em>",
+    sub:"flowy · feminine · florals",
+    image:"aesthetic-romantic.jpg",
+    preview:{ shapes:["dress-slip","shoe-heel","head-widebrim"], colors:["#A7B084","#C9A57A","#F0E8CE"] } },
+  { id:"edgy",
+    name:"Edgy / <em>Dark</em>",
+    sub:"black-heavy · leather · deconstructed",
+    image:"aesthetic-edgy.jpg",
+    preview:{ shapes:["outer-moto","bottom-trousers","shoe-boot"], colors:["#1B1418","#2A2A2A","#4B4B50"] } },
+  { id:"eclectic",
+    name:"Eclectic / <em>Maximalist</em>",
+    sub:"color · print · statement",
+    image:"aesthetic-eclectic.jpg",
+    preview:{ shapes:["top-blouse","bottom-skirt","shoe-loafer"], colors:["#B23A2E","#D9A44F","#2A5F6E"] } },
+  { id:"preppy",
+    name:"Preppy / <em>Collegiate</em>",
+    sub:"rugby stripes · loafers · cable knit",
+    image:"aesthetic-preppy.jpg",
+    preview:{ shapes:["top-blouse","bottom-skirt","shoe-loafer"], colors:["#1E3A2E","#F4EEDC","#7A2A2E"] } },
+];
+
+const PALETTES_BASE = {
+  neutrals: { name:"Neutrals",     sub:"cream · camel · black · white · grey",
+              colors:["#F4EEDC","#E4D3B0","#C9A57A","#8A867A","#1B1418"] },
+  earth:    { name:"Earth tones",  sub:"olive · rust · terracotta · mustard · brown",
+              colors:["#6E7A45","#B04A2E","#D96B5A","#D9A44F","#5A3A22"] },
+  cool:     { name:"Cool tones",   sub:"navy · charcoal · denim · grey · forest",
+              colors:["#1E2A44","#33383F","#4B5F7A","#8C9099","#2E4A38"] },
+  bold:     { name:"Bold / jewel", sub:"cobalt · emerald · magenta · red · black",
+              colors:["#1F3AA8","#0E7A5A","#B0347A","#B23A2E","#1B1418"] }
+};
+
+/* -------------------- SVG GARMENT SILHOUETTES --------------------
+   Each shape is a compact <path> or set of shapes drawn on a 100x100
+   canvas. Filled with the item's primary color, subtle stroke.
+   Editorial line-drawing energy — the "signature" of the site.
+------------------------------------------------------------------- */
+const SHAPES = {
+  /* ---------- TOPS ---------- */
+  // Crewneck tee: crew neckline dip, short sleeves, straight hem.
+  "top-tshirt":   `<path d="M22 30 L34 22 Q42 28 50 28 Q58 28 66 22 L78 30 L74 40 L66 36 L66 80 L34 80 L34 36 L26 40 Z"/><path d="M42 24 Q50 30 58 24" fill="none" stroke-width="1.2"/>`,
+  // Tank: thin straps, deep U-neck, straight hem.
+  "top-tank":     `<path d="M34 24 L38 46 L38 80 L62 80 L62 46 L66 24 Q58 32 50 32 Q42 32 34 24 Z"/><path d="M34 24 Q34 40 42 44 M66 24 Q66 40 58 44" fill="none" stroke-width="1.2" opacity="0.35"/>`,
+  // Hoodie: raised hood, kangaroo pocket, drawstrings, ribbed hem.
+  "top-hoodie":   `<path d="M20 36 L34 24 L34 20 Q50 14 66 20 L66 24 L80 36 L74 48 L68 44 L68 84 L32 84 L32 44 L26 48 Z"/><path d="M34 20 Q50 30 66 20 L64 38 L36 38 Z" fill="rgba(0,0,0,0.18)"/><line x1="46" y1="30" x2="46" y2="46" stroke-width="1.2"/><line x1="54" y1="30" x2="54" y2="46" stroke-width="1.2"/><path d="M36 58 Q50 68 64 58 L64 74 L36 74 Z" fill="none" stroke-width="1.2" opacity="0.55"/>`,
+  // Blouse: shirt collar, buttons down front, cuffs.
+  "top-blouse":   `<path d="M22 30 L34 22 L40 30 L60 30 L66 22 L78 30 L74 44 L68 40 L68 82 L32 82 L32 40 L26 44 Z"/><path d="M40 30 L50 40 L60 30" fill="none" stroke-width="1.2"/><line x1="50" y1="40" x2="50" y2="80" stroke-width="1" opacity="0.5"/><circle cx="50" cy="50" r="1"/><circle cx="50" cy="60" r="1"/><circle cx="50" cy="70" r="1"/>`,
+  // Cardigan: v-open front placket with buttons, ribbed edge.
+  "top-cardigan": `<path d="M22 32 L36 22 L50 32 L64 22 L78 32 L74 44 L68 40 L68 84 L32 84 L32 40 L26 44 Z"/><path d="M50 32 L44 84 M50 32 L56 84" fill="none" stroke-width="1.2"/><circle cx="46" cy="46" r="1.2"/><circle cx="46" cy="56" r="1.2"/><circle cx="46" cy="66" r="1.2"/><circle cx="46" cy="76" r="1.2"/>`,
+  // Sweater/turtleneck: high neck, ribbed cuffs and hem.
+  "top-sweater":  `<path d="M22 36 L34 26 Q42 32 50 32 Q58 32 66 26 L78 36 L72 46 L68 42 L68 82 L32 82 L32 42 L28 46 Z"/><path d="M40 24 Q50 30 60 24 L58 34 L42 34 Z" fill="rgba(0,0,0,0.15)"/><line x1="34" y1="76" x2="66" y2="76" stroke-width="1" opacity="0.4"/>`,
+  // Polo: collar, 2-3 buttons, short sleeves.
+  "top-polo":     `<path d="M22 30 L34 22 L42 32 L58 32 L66 22 L78 30 L74 40 L66 36 L66 80 L34 80 L34 36 L26 40 Z"/><path d="M42 32 L50 42 L58 32" fill="none" stroke-width="1.2"/><circle cx="47" cy="42" r="0.9"/><circle cx="47" cy="48" r="0.9"/>`,
+
+  /* ---------- BOTTOMS ---------- */
+  // Trousers: waistband, front pleat lines, tapered leg.
+  "bottom-trousers":`<path d="M32 20 L68 20 L70 84 L58 84 L54 42 L50 42 L46 84 L34 84 Z"/><rect x="32" y="20" width="36" height="4" fill="rgba(0,0,0,0.2)"/><line x1="44" y1="26" x2="42" y2="82" stroke-width="0.8" opacity="0.35"/><line x1="56" y1="26" x2="58" y2="82" stroke-width="0.8" opacity="0.35"/>`,
+  // Jean: 5-pocket, fly, belt loops.
+  "bottom-jean":  `<path d="M32 20 L68 20 L70 84 L56 84 L52 44 L48 44 L44 84 L30 84 Z"/><rect x="32" y="20" width="36" height="4" fill="rgba(0,0,0,0.25)"/><line x1="38" y1="20" x2="38" y2="26" stroke-width="1"/><line x1="50" y1="20" x2="50" y2="26" stroke-width="1"/><line x1="62" y1="20" x2="62" y2="26" stroke-width="1"/><path d="M50 24 L50 40" stroke-width="1" opacity="0.5"/><path d="M35 28 Q40 32 42 40 M65 28 Q60 32 58 40" fill="none" stroke-width="0.9" opacity="0.4"/>`,
+  // Cargo: side pockets with flaps.
+  "bottom-cargo": `<path d="M30 20 L70 20 L72 86 L56 86 L52 44 L48 44 L44 86 L28 86 Z"/><rect x="30" y="20" width="40" height="4" fill="rgba(0,0,0,0.2)"/><rect x="30" y="48" width="12" height="14" fill="none" stroke-width="1.2"/><rect x="58" y="48" width="12" height="14" fill="none" stroke-width="1.2"/><line x1="30" y1="52" x2="42" y2="52" stroke-width="1"/><line x1="58" y1="52" x2="70" y2="52" stroke-width="1"/>`,
+  // Skirt: A-line, waistband.
+  "bottom-skirt": `<path d="M34 22 L66 22 L78 84 L22 84 Z"/><rect x="34" y="22" width="32" height="4" fill="rgba(0,0,0,0.2)"/><line x1="42" y1="28" x2="30" y2="82" stroke-width="0.8" opacity="0.3"/><line x1="58" y1="28" x2="70" y2="82" stroke-width="0.8" opacity="0.3"/><line x1="50" y1="28" x2="50" y2="82" stroke-width="0.8" opacity="0.3"/>`,
+  // Pleated skirt: repeating vertical lines
+  "bottom-pleated":`<path d="M34 22 L66 22 L78 84 L22 84 Z"/><rect x="34" y="22" width="32" height="4" fill="rgba(0,0,0,0.22)"/><line x1="40" y1="28" x2="34" y2="82" stroke-width="0.9" opacity="0.5"/><line x1="46" y1="28" x2="42" y2="82" stroke-width="0.9" opacity="0.5"/><line x1="50" y1="28" x2="50" y2="82" stroke-width="0.9" opacity="0.5"/><line x1="54" y1="28" x2="58" y2="82" stroke-width="0.9" opacity="0.5"/><line x1="60" y1="28" x2="66" y2="82" stroke-width="0.9" opacity="0.5"/>`,
+  // Shorts: shorter length, waistband.
+  "bottom-shorts":`<path d="M30 20 L70 20 L70 54 L58 54 L54 42 L50 42 L46 54 L30 54 Z"/><rect x="30" y="20" width="40" height="4" fill="rgba(0,0,0,0.2)"/>`,
+  // Bermuda: longer than shorts, shorter than trousers.
+  "bottom-bermuda":`<path d="M30 20 L70 20 L71 64 L57 64 L54 42 L50 42 L47 64 L29 64 Z"/><rect x="30" y="20" width="40" height="4" fill="rgba(0,0,0,0.2)"/><line x1="50" y1="24" x2="50" y2="42" stroke-width="0.8" opacity="0.4"/>`,
+
+  /* ---------- DRESSES ---------- */
+  // Slip: bias-cut, thin straps, subtle bust.
+  "dress-slip":   `<path d="M34 22 L38 34 L30 90 L70 90 L62 34 L66 22 Q58 30 50 30 Q42 30 34 22 Z"/><path d="M34 22 Q42 28 50 28 Q58 28 66 22" fill="none" stroke-width="1" opacity="0.4"/>`,
+  // Column: sheath, straight silhouette, subtle waist definition.
+  "dress-column":`<path d="M34 22 L66 22 L64 42 Q65 50 66 60 L70 90 L30 90 L34 60 Q35 50 36 42 Z"/><path d="M36 42 Q50 46 64 42" fill="none" stroke-width="0.8" opacity="0.35"/>`,
+  // Prairie/tiered dress: gathered layers.
+  "dress-prairie":`<path d="M34 22 L66 22 L66 34 Q50 30 34 34 Z"/><path d="M32 34 L68 34 L72 54 Q50 50 28 54 Z"/><path d="M27 54 L73 54 L78 90 Q50 82 22 90 Z"/>`,
+  // Jumpsuit: top + full-length pant, defined waist, wide or tapered legs.
+  "onepiece-jumpsuit": `<path d="M32 22 L38 30 L62 30 L68 22 Q60 28 50 28 Q40 28 32 22 Z"/><path d="M36 30 L36 46 Q34 50 34 54 L36 90 L48 90 L50 54 L52 90 L64 90 L66 54 Q66 50 64 46 L64 30 Z"/><rect x="36" y="46" width="28" height="3" fill="rgba(0,0,0,0.3)"/><line x1="50" y1="30" x2="50" y2="46" stroke-width="0.8" opacity="0.35"/>`,
+  // Romper: top + shorts (thigh-length), defined waist.
+  "onepiece-romper":   `<path d="M32 22 L38 30 L62 30 L68 22 Q60 28 50 28 Q40 28 32 22 Z"/><path d="M36 30 L36 46 Q34 50 34 54 L34 66 L46 66 L48 54 L52 54 L54 66 L66 66 L66 54 Q66 50 64 46 L64 30 Z"/><rect x="36" y="46" width="28" height="3" fill="rgba(0,0,0,0.3)"/>`,
+  // Overalls: bib top + wide pant, exposed shoulder straps.
+  "onepiece-overalls": `<path d="M40 22 L40 30 L36 34 L36 46 Q34 50 34 54 L36 90 L48 90 L50 54 L52 90 L64 90 L66 54 Q66 50 64 46 L64 34 L60 30 L60 22" fill="none" stroke-width="2"/><path d="M36 46 L64 46" stroke-width="2"/><path d="M40 30 L60 30 L60 44 L40 44 Z"/><circle cx="44" cy="40" r="1.4"/><circle cx="56" cy="40" r="1.4"/>`,
+
+  /* ---------- SHOES ---------- */
+  // Loafer: penny-slot detail, distinct sole.
+  "shoe-loafer":  `<path d="M18 60 Q28 52 50 52 Q72 52 82 60 Q84 68 78 72 L22 72 Q16 68 18 60 Z"/><path d="M40 56 Q50 54 60 56 L58 62 L42 62 Z" fill="none" stroke-width="1.2"/><path d="M46 58 L54 58" stroke-width="1"/><path d="M16 72 L84 72 L84 76 L16 76 Z" fill="rgba(0,0,0,0.35)"/>`,
+  // Sneaker: distinct laces, tongue, chunky midsole.
+  "shoe-sneaker": `<path d="M18 62 L32 52 Q42 50 60 54 Q76 58 84 66 Q86 72 80 74 L22 74 Q18 72 18 62 Z"/><path d="M18 64 L84 64" stroke-width="0.8" opacity="0.4"/><path d="M32 54 Q42 60 42 68" fill="rgba(0,0,0,0.18)"/><line x1="36" y1="56" x2="44" y2="66" stroke-width="1.3"/><line x1="42" y1="54" x2="50" y2="66" stroke-width="1.3"/><line x1="48" y1="56" x2="56" y2="68" stroke-width="1.3"/><path d="M16 74 L86 74 L86 78 L16 78 Z" fill="rgba(0,0,0,0.4)"/>`,
+  // Boot: heel visible, shaft rising, pull-tab.
+  "shoe-boot":    `<path d="M32 22 L54 22 L58 60 Q76 62 82 72 Q84 78 76 78 L26 78 L26 68 Q28 58 30 42 Z"/><path d="M40 22 L48 26" fill="none" stroke-width="1.2" opacity="0.5"/><path d="M26 78 L82 78 L82 82 L26 82 Z" fill="rgba(0,0,0,0.4)"/><path d="M76 72 L82 72" stroke-width="0.8" opacity="0.4"/>`,
+  // Heel: clearly visible stiletto heel + strap.
+  "shoe-heel":    `<path d="M18 60 Q28 52 50 52 Q70 52 80 60 L80 66 L60 66 L64 82 L58 84 L54 66 L40 66 Q28 66 18 62 Z"/><path d="M60 66 Q62 74 62 82" fill="none" stroke-width="2"/><path d="M42 54 Q50 50 58 54" fill="none" stroke-width="1.2"/>`,
+  // Sandal (flat): open toe straps.
+  "shoe-sandal":  `<path d="M18 62 Q28 60 50 60 Q72 60 82 62 L82 68 L18 68 Z"/><path d="M32 62 Q40 52 48 62 M52 62 Q60 52 68 62" fill="none" stroke-width="1.5"/>`,
+  // Chunky/platform: thick lugged sole, distinct platform block.
+  "shoe-chunky":  `<path d="M20 56 Q30 48 50 48 Q70 48 80 56 Q82 62 78 66 L22 66 Q18 62 20 56 Z"/><path d="M40 52 Q50 50 60 52 L58 60 L42 60 Z" fill="none" stroke-width="1.2"/><path d="M16 66 L84 66 L84 78 L16 78 Z" fill="rgba(0,0,0,0.55)"/><path d="M20 74 L24 74 M28 74 L32 74 M36 74 L40 74 M44 74 L48 74 M52 74 L56 74 M60 74 L64 74 M68 74 L72 74 M76 74 L80 74" stroke-width="1.2" opacity="0.6"/>`,
+  // Runner: distinct N/curved side panel + chunky midsole (New Balance style).
+  "shoe-runner":  `<path d="M18 60 L34 50 Q46 48 62 52 Q78 58 84 66 Q86 72 80 74 L22 74 Q18 72 18 60 Z"/><path d="M40 54 Q50 62 52 74" fill="rgba(0,0,0,0.2)"/><path d="M42 56 Q48 60 50 68" fill="none" stroke-width="2.5" opacity="0.7"/><path d="M16 74 L86 74 L86 80 L16 80 Z" fill="rgba(0,0,0,0.42)"/><path d="M20 78 L86 78" stroke-width="0.9" opacity="0.4"/>`,
+  // Ballet flat: side-profile — rounded toe box, low-cut vamp scoop, flat sole, tiny bow on the vamp.
+  "shoe-ballet":  `<path d="M14 62 Q14 54 34 54 Q56 54 78 60 Q86 62 86 66 L86 70 L14 70 Z"/><path d="M32 54 Q42 60 56 60" fill="rgba(255,255,255,0.35)" stroke="none"/><path d="M36 56 Q46 62 60 62" fill="none" stroke-width="1.2" opacity="0.5"/><path d="M40 58 L44 54 L44 60 Z M40 58 L36 54 L36 60 Z" fill="rgba(0,0,0,0.55)"/><rect x="14" y="70" width="72" height="3" fill="rgba(0,0,0,0.5)"/>`,
+  // Mule: backless, pointed or square toe, small kitten heel visible.
+  "shoe-mule":    `<path d="M20 60 Q34 54 54 54 Q72 54 82 60 L80 66 L36 66 Q28 66 22 66 Z"/><path d="M78 64 Q78 74 74 80 L70 80 Q72 72 70 66" fill="none" stroke-width="2"/>`,
+
+  /* ---------- OUTERWEAR ---------- */
+  // Wool coat: double-breasted, notched lapels, longer length.
+  "outer-coat":   `<path d="M18 26 L34 18 L44 26 L56 26 L66 18 L82 26 L78 46 L72 42 L72 90 L28 90 L28 42 L22 46 Z"/><path d="M44 26 L38 38 L38 44 L44 42 L50 30 Z" fill="rgba(0,0,0,0.25)"/><path d="M56 26 L62 38 L62 44 L56 42 L50 30 Z" fill="rgba(0,0,0,0.25)"/><line x1="50" y1="30" x2="50" y2="90" stroke-width="1" opacity="0.35"/><circle cx="44" cy="52" r="1.2"/><circle cx="56" cy="52" r="1.2"/><circle cx="44" cy="66" r="1.2"/><circle cx="56" cy="66" r="1.2"/>`,
+  // Moto: asymmetric zip, notched shoulder, cropped.
+  "outer-moto":   `<path d="M20 30 L36 22 L44 28 L56 28 L64 22 L80 30 L74 42 L74 82 L26 82 L26 42 Z"/><path d="M44 28 L54 34 L54 82 M56 28 L54 34" fill="none" stroke-width="1.5"/><path d="M44 28 L34 42 L38 44 L46 32 Z" fill="rgba(0,0,0,0.28)"/><line x1="48" y1="42" x2="52" y2="42" stroke-width="1" opacity="0.4"/><line x1="48" y1="52" x2="52" y2="52" stroke-width="1" opacity="0.4"/><line x1="48" y1="62" x2="52" y2="62" stroke-width="1" opacity="0.4"/>`,
+  // Trench: double-breasted, belt, storm flap.
+  "outer-trench": `<path d="M18 26 L34 18 L44 24 L56 24 L66 18 L82 26 L78 40 L74 36 L74 92 L26 92 L26 36 L22 40 Z"/><path d="M28 30 L38 26 M62 26 L72 30" stroke-width="1.4" opacity="0.55"/><path d="M40 28 L40 92 M60 28 L60 92" fill="none" stroke-width="1" opacity="0.4"/><rect x="26" y="58" width="48" height="4" fill="rgba(0,0,0,0.3)"/><circle cx="30" cy="60" r="1.4"/><circle cx="70" cy="60" r="1.4"/><circle cx="40" cy="40" r="1"/><circle cx="60" cy="40" r="1"/><circle cx="40" cy="50" r="1"/><circle cx="60" cy="50" r="1"/>`,
+  // Shawl: draped, no closure.
+  "outer-shawl":  `<path d="M12 22 Q50 32 88 22 L82 62 Q50 82 18 62 Z"/><path d="M20 24 L50 78 L80 24" fill="none" stroke-width="0.8" opacity="0.35"/>`,
+  // Shell/parka: hooded, drawstring hem, big front pocket.
+  "outer-shell":  `<path d="M22 30 L34 22 Q42 28 50 28 Q58 28 66 22 L78 30 L76 46 L70 42 L70 84 L30 84 L30 42 L24 46 Z"/><path d="M40 22 Q50 30 60 22 L58 40 L42 40 Z" fill="rgba(0,0,0,0.2)"/><rect x="42" y="52" width="16" height="16" fill="none" stroke-width="1.2"/><path d="M42 60 L58 60" stroke-width="0.9" opacity="0.5"/><path d="M32 78 L68 78" stroke-width="0.9" opacity="0.4"/>`,
+  // Bomber: ribbed collar/cuffs/hem, front zip.
+  "outer-bomber": `<path d="M22 30 L34 22 Q42 28 50 28 Q58 28 66 22 L78 30 L74 42 L68 40 L68 76 Q68 80 66 80 L34 80 Q32 80 32 76 L32 40 L26 42 Z"/><rect x="34" y="20" width="32" height="6" fill="rgba(0,0,0,0.22)"/><rect x="32" y="76" width="36" height="4" fill="rgba(0,0,0,0.22)"/><line x1="50" y1="30" x2="50" y2="78" stroke-width="1.2"/>`,
+  // Puffer: horizontal quilted channels.
+  "outer-puffer": `<path d="M22 28 L36 22 Q42 28 50 28 Q58 28 64 22 L78 28 L76 44 L70 40 L70 86 L30 86 L30 40 L24 44 Z"/><path d="M30 42 L70 42 M30 52 L70 52 M30 62 L70 62 M30 72 L70 72 M30 82 L70 82" stroke-width="1.4" opacity="0.5"/>`,
+  // Barn jacket: corduroy collar, patch pockets.
+  "outer-barn":   `<path d="M22 28 L34 20 L44 26 L56 26 L66 20 L78 28 L74 42 L70 38 L70 84 L30 84 L30 38 L26 42 Z"/><rect x="34" y="20" width="32" height="6" fill="rgba(0,0,0,0.28)"/><path d="M50 26 L50 84" stroke-width="1" opacity="0.4"/><rect x="34" y="54" width="14" height="16" fill="none" stroke-width="1.2"/><rect x="52" y="54" width="14" height="16" fill="none" stroke-width="1.2"/>`,
+  // Cape: sleeveless drape.
+  "outer-cape":   `<path d="M20 22 Q50 30 80 22 L86 90 L14 90 Z"/><path d="M20 22 L26 88 M80 22 L74 88" fill="none" stroke-width="0.8" opacity="0.35"/><path d="M42 32 Q50 40 58 32" fill="none" stroke-width="1"/>`,
+
+  /* ---------- HEADWEAR ---------- */
+  "head-beret":   `<ellipse cx="50" cy="54" rx="34" ry="18"/><ellipse cx="50" cy="46" rx="26" ry="10" fill="rgba(0,0,0,0.18)"/><circle cx="66" cy="38" r="3"/>`,
+  "head-cap":     `<path d="M20 62 Q20 40 50 40 Q80 40 80 62 Q80 66 76 66 L24 66 Q20 66 20 62 Z"/><path d="M76 62 Q92 66 96 74 Q90 72 76 66 Z"/><path d="M32 44 Q50 34 68 44" fill="none" stroke-width="1" opacity="0.35"/>`,
+  "head-widebrim":`<ellipse cx="50" cy="62" rx="44" ry="8"/><path d="M26 60 Q26 30 50 30 Q74 30 74 60"/><rect x="26" y="54" width="48" height="4" fill="rgba(0,0,0,0.28)"/>`,
+  "head-beanie":  `<path d="M28 62 Q28 30 50 26 Q72 30 72 62 Z"/><rect x="28" y="58" width="44" height="8" fill="rgba(0,0,0,0.2)"/><line x1="34" y1="34" x2="34" y2="58" stroke-width="0.8" opacity="0.4"/><line x1="42" y1="30" x2="42" y2="58" stroke-width="0.8" opacity="0.4"/><line x1="50" y1="28" x2="50" y2="58" stroke-width="0.8" opacity="0.4"/><line x1="58" y1="30" x2="58" y2="58" stroke-width="0.8" opacity="0.4"/><line x1="66" y1="34" x2="66" y2="58" stroke-width="0.8" opacity="0.4"/>`,
+
+  /* ---------- JEWELRY ---------- */
+  "jew-hoop":     `<circle cx="50" cy="50" r="26" fill="none" stroke-width="7"/>`,
+  "jew-ring":     `<circle cx="50" cy="60" r="18" fill="none" stroke-width="7"/><path d="M40 32 L60 32 L54 44 L46 44 Z"/><rect x="46" y="26" width="8" height="8" fill="rgba(0,0,0,0.25)"/>`,
+  "jew-chain":    `<path d="M22 34 Q50 62 78 34" fill="none" stroke-width="4"/><path d="M28 38 Q50 66 72 38" fill="none" stroke-width="4"/>`,
+  "bag-tote":     `<path d="M24 34 L76 34 L72 86 L28 86 Z"/><path d="M36 34 Q36 20 50 20 Q64 20 64 34" fill="none" stroke-width="2.5"/>`,
+  "bag-cross":    `<path d="M26 42 L74 42 L70 78 L30 78 Z"/><path d="M30 42 Q10 24 50 20 Q90 24 70 42" fill="none" stroke-width="2"/>`,
+  // scarves
+  "scarf-winter": `<path d="M20 20 L80 20 L82 30 L18 30 Z"/><path d="M35 30 L42 82 L58 82 L65 30 Z"/><path d="M35 78 L58 82 M42 82 L65 78" stroke-width="1.5" opacity="0.4"/>`,
+  "scarf-light":  `<path d="M25 26 Q50 40 75 26 L78 34 Q50 50 22 34 Z"/><path d="M22 34 L26 60 L34 58 Z"/><path d="M78 34 L74 60 L66 58 Z"/>`,
+  // gloves
+  "gloves":       `<path d="M32 30 L32 76 Q32 84 40 84 L54 84 Q62 84 62 76 L62 42 Q62 38 58 38 Q54 38 54 42 L54 30 Q54 26 50 26 Q46 26 46 30 L46 42 Q46 38 42 38 Q38 38 38 42 L38 30 Q38 26 34 26 Q30 26 30 30 Z" transform="translate(6,0)"/>`,
+  // sunglasses
+  "sunglasses":   `<ellipse cx="32" cy="52" rx="16" ry="12"/><ellipse cx="68" cy="52" rx="16" ry="12"/><path d="M48 50 L52 50" stroke-width="2" fill="none"/><path d="M16 46 L10 40 M84 46 L90 40" stroke-width="2" fill="none"/>`,
+  // neck accessories
+  "neck-scarf":   `<path d="M32 30 Q50 34 68 30 Q64 44 66 60 L54 78 L46 78 L34 60 Q36 44 32 30 Z"/><path d="M42 40 Q50 44 58 40" fill="none" stroke-width="1" opacity="0.5"/>`,
+  "neck-tie":     `<path d="M42 22 L58 22 L58 32 L64 40 L54 82 L46 82 L36 40 L42 32 Z"/>`,
+  "bandana":      `<path d="M20 30 L80 30 L74 52 L50 60 L26 52 Z"/><path d="M28 34 L40 40 M60 40 L72 34 M40 42 L60 42" fill="none" stroke-width="1.2" opacity="0.5"/>`,
+};
+
+function garmentSVG(shape, color) {
+  const s = SHAPES[shape] || SHAPES["top-tshirt"];
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="${color}" stroke="#2A1E2A" stroke-width="1.2" stroke-linejoin="round">${s}</svg>`;
+}
+
+/* -------------------- RENDER OPTIONS -------------------- */
+function renderAesthetics() {
+  const cardHTML = (a) => {
+    const layered = a.preview.shapes.map((sh, i) => {
+      const c = a.preview.colors[i] || a.preview.colors[0];
+      return `<div style="flex:1;display:grid;place-items:center;">${garmentSVG(sh, c)}</div>`;
+    }).join("");
+    const fallback = `<div class="aesthetic-fallback" style="display:none;flex:1 1 100%;">${layered}</div>`;
+    const img = a.image
+      ? `<img class="aesthetic-photo" src="${a.image}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
+      : "";
+    return `<button class="opt" data-val="${a.id}" role="radio" aria-checked="false">
+      <div class="aesthetic-vis" style="display:flex;">${img}${fallback}</div>
+      <div class="opt-name">${a.name}</div>
+      <div class="opt-sub">${a.sub}</div>
+    </button>`;
+  };
+  // Q1 keeps AESTHETICS order (matches design intent). Q2 gets a deterministic
+  // shuffle so it doesn't look like a duplicate of Q1 — but the same order
+  // every visit, so the user isn't disoriented on back-navigation.
+  const q1 = document.querySelector('[data-field="aesthetic"]');
+  const q2 = document.querySelector('[data-field="aesthetic_target"]');
+  if (q1) q1.innerHTML = AESTHETICS.map(cardHTML).join("");
+  if (q2) {
+    // Fixed reorder — chosen so no card sits in its Q1 position.
+    // Q1 order: minimalist, streetwear, romantic, edgy, eclectic, preppy
+    // Q2 order: preppy,     eclectic,   edgy,     romantic, streetwear, minimalist
+    const order = ["preppy","eclectic","edgy","romantic","streetwear","minimalist"];
+    const shuffled = order.map(id => AESTHETICS.find(a => a.id === id)).filter(Boolean);
+    q2.innerHTML = shuffled.map(cardHTML).join("");
+  }
+}
+
+function renderPalettes(fieldName, order) {
+  const grid = document.querySelector(`[data-field="${fieldName}"]`);
+  grid.innerHTML = order.map(key => {
+    const p = PALETTES_BASE[key];
+    const swatches = p.colors.map(c => `<span style="background:${c}"></span>`).join("");
+    return `<button class="opt" data-val="${key}" role="radio" aria-checked="false">
+      <div class="palette-vis">${swatches}</div>
+      <div class="opt-name">${p.name}</div>
+      <div class="opt-sub">${p.sub}</div>
+    </button>`;
+  }).join("");
+}
+
+/* -------------------- FLOW -------------------- */
+function showStep(n) {
+  state.step = n;
+  document.querySelectorAll(".q").forEach(el => el.classList.remove("active"));
+  const el = document.querySelector(`.q[data-q="${n}"]`);
+  if (el) el.classList.add("active");
+  renderProgress();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderProgress() {
+  const total = TOTAL_STEPS;
+  const bar = document.getElementById("progress");
+  bar.innerHTML = "";
+  for (let i = 1; i <= total; i++) {
+    const s = document.createElement("span");
+    if (i < state.step) s.className = "done";
+    else if (i === state.step) s.className = "current";
+    bar.appendChild(s);
+  }
+}
+
+function bindOpts() {
+  document.querySelectorAll('.opts').forEach(grid => {
+    const field = grid.dataset.field;
+    grid.addEventListener("click", (e) => {
+      const btn = e.target.closest(".opt");
+      if (!btn) return;
+      grid.querySelectorAll(".opt").forEach(b => { b.classList.remove("selected"); b.setAttribute("aria-checked", "false"); });
+      btn.classList.add("selected");
+      btn.setAttribute("aria-checked", "true");
+      state[field] = btn.dataset.val;
+      // enable continue in this card
+      const card = grid.closest(".q");
+      const next = card.querySelector("[data-next]");
+      if (next) next.disabled = false;
+    });
+  });
+}
+
+function bindNav() {
+  document.querySelectorAll("[data-next]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const to = parseInt(btn.dataset.next, 10);
+      // handle location branching (Q5): if user picked "share", try geolocation and skip Q6
+      if (state.step === 5) {
+        if (state.location_mode === "share") {
+          btn.disabled = true;
+          const originalText = btn.textContent;
+          btn.textContent = "Locating…";
+          fetchGeoWeather().then(() => {
+            btn.disabled = false; btn.textContent = originalText;
+            showStep(7);
+          }).catch(() => {
+            btn.disabled = false; btn.textContent = originalText;
+            showBanner("Couldn't get your location. Tell us the weather instead.");
+            showStep(6);
+          });
+          return;
+        } else {
+          // manual — go to step 6
+          showStep(6); return;
+        }
+      }
+      if (state.step === 6) {
+        state.weather_text = document.getElementById("weather_text").value.trim();
+      }
+      if (state.step === 7) {
+        state.occasion = document.getElementById("occasion").value.trim();
+      }
+      if (state.step === 8) {
+        state.vibe = document.getElementById("vibe").value.trim();
+      }
+      showStep(to);
+    });
+  });
+  document.querySelectorAll("[data-back]").forEach(btn => {
+    btn.addEventListener("click", () => showStep(parseInt(btn.dataset.back, 10)));
+  });
+
+  // Q6 weather textarea — live parse + enable continue when we've got signal
+  const wt = document.getElementById("weather_text");
+  const echo = document.getElementById("weather_echo");
+  const echoSpan = echo.querySelector("span");
+  wt.addEventListener("input", () => {
+    const val = wt.value.trim();
+    const btn = document.querySelector('.q[data-q="6"] [data-next]');
+    if (val.length < 3) {
+      btn.disabled = true;
+      echo.hidden = true;
+      state.weather = null;
+      return;
+    }
+    const parsed = parseManualWeather(val);
+    state.weather = parsed; // commit immediately so it can't be missed
+    state.weather_text = val;
+    // Show the parse-echo so the user can see what we understood
+    const summary = summarizeParsed(parsed);
+    if (summary) {
+      echoSpan.textContent = summary;
+      echo.hidden = false;
+    } else {
+      echoSpan.textContent = "no temperature detected — add a number if you can";
+      echo.hidden = false;
+    }
+    // Require at least a temp OR a strong tag to continue
+    const hasSignal = parsed.tempF != null || (parsed.tags && parsed.tags.length > 0);
+    btn.disabled = !hasSignal;
+  });
+  // step 4 auto-enables continue when a mode is picked (already handled by bindOpts)
+
+  document.getElementById("submit").addEventListener("click", () => {
+    // vibe was captured on nav from Q8 → Q9, but re-capture in case they edited
+    state.vibe = document.getElementById("vibe").value.trim();
+    state.song = document.getElementById("song").value.trim();
+    generateOutfit();
+  });
+  document.getElementById("regen").addEventListener("click", () => generateOutfit(true));
+  document.getElementById("restart").addEventListener("click", () => location.reload());
+
+  // ---- feedback ----
+  document.getElementById("feedback-open").addEventListener("click", () => {
+    const fb = document.getElementById("feedback");
+    fb.hidden = false;
+    fb.querySelector(".feedback-inner").hidden = false;
+    document.getElementById("feedback-thanks").hidden = true;
+    // scroll it into view and focus the textarea
+    fb.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => document.getElementById("feedback_text").focus(), 200);
+  });
+  document.getElementById("feedback-cancel").addEventListener("click", () => {
+    document.getElementById("feedback").hidden = true;
+  });
+  document.getElementById("feedback-submit").addEventListener("click", () => {
+    const text = document.getElementById("feedback_text").value.trim();
+    if (text.length < 3) {
+      document.getElementById("feedback_text").focus();
+      return;
+    }
+    const w = state.weather || {};
+    addFeedback({
+      ts: Date.now(),
+      aesthetic: state.aesthetic,
+      aesthetic_target: state.aesthetic_target,
+      palette_current: state.palette_current,
+      palette_target: state.palette_target,
+      occasion: state.occasion || null,
+      vibe: state.vibe || null,
+      tempF: w.tempF ?? null,
+      condition: w.condition || null,
+      generated: (currentOutfit?.pieces || []).map(p => `${p.name} (${p.brand})`),
+      feedback: text
+    });
+    // swap to thanks state
+    document.querySelector("#feedback .feedback-inner").hidden = true;
+    document.getElementById("feedback-thanks").hidden = false;
+  });
+}
+
+/* -------------------- BANNER -------------------- */
+function showBanner(msg) {
+  const b = document.getElementById("banner");
+  b.textContent = msg;
+  b.classList.add("active");
+  setTimeout(() => b.classList.remove("active"), 6000);
+}
+
+/* -------------------- WEATHER -------------------- */
+async function fetchGeoWeather() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error("no-geo"));
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const w = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,apparent_temperature&temperature_unit=fahrenheit&timezone=auto`);
+        const wd = await w.json();
+        // Reverse geocode via Open-Meteo's geocoding — best-effort
+        let city = "your location";
+        try {
+          const g = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&count=1`);
+          const gd = await g.json();
+          if (gd.results && gd.results[0]) city = gd.results[0].name + (gd.results[0].admin1 ? `, ${gd.results[0].admin1}` : "");
+        } catch (_) {}
+        const c = wd.current;
+        state.weather = {
+          tempF: Math.round(c.temperature_2m),
+          tempC: Math.round((c.temperature_2m - 32) * 5/9),
+          feelsF: Math.round(c.apparent_temperature),
+          condition: wmoDescribe(c.weather_code),
+          wind: Math.round(c.wind_speed_10m),
+          humidity: c.relative_humidity_2m,
+          city,
+          source: "geo",
+          raw: c
+        };
+        resolve();
+      } catch (err) { reject(err); }
+    }, (err) => reject(err), { timeout: 8000 });
+  });
+}
+
+function wmoDescribe(code) {
+  const map = {
+    0:"clear sky",1:"mainly clear",2:"partly cloudy",3:"overcast",
+    45:"fog",48:"depositing rime fog",
+    51:"light drizzle",53:"drizzle",55:"dense drizzle",
+    61:"light rain",63:"rain",65:"heavy rain",
+    71:"light snow",73:"snow",75:"heavy snow",
+    77:"snow grains",
+    80:"rain showers",81:"heavy showers",82:"violent showers",
+    85:"snow showers",86:"heavy snow showers",
+    95:"thunderstorm",96:"thunderstorm w/ hail",99:"thunderstorm w/ heavy hail"
+  };
+  return map[code] || "—";
+}
+
+function parseManualWeather(text) {
+  if (!text) return null;
+  const t = text.toLowerCase();
+
+  // 1) Try to extract a temperature (°F or °C). Match many phrasings:
+  //    "30F", "30°F", "30 F", "30°", "30 degrees", "30 degrees fahrenheit",
+  //    "thirty degrees", "minus 5", "-5C"
+  let tempF = null, tempC = null;
+  const numberWords = {
+    zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9,
+    ten:10, twenty:20, thirty:30, forty:40, fifty:50, sixty:60, seventy:70, eighty:80, ninety:90, hundred:100
+  };
+  // normalize "minus X" → "-X"; "negative X" → "-X"
+  let norm = t.replace(/\b(minus|negative)\s+(\d+)/g, "-$2");
+  // number-words to digits (single-word only, e.g. "thirty")
+  for (const [w, n] of Object.entries(numberWords)) {
+    norm = norm.replace(new RegExp(`\\b${w}\\b`, "g"), String(n));
+  }
+
+  // Match a number followed by an optional degree symbol, optional "degrees",
+  // and an optional F/C or fahrenheit/celsius unit.
+  const rx = /(-?\d{1,3})\s*(?:°|deg|degrees?)?\s*(fahrenheit|celsius|f|c)?\b/gi;
+  let match, best = null;
+  while ((match = rx.exec(norm)) !== null) {
+    const n = parseInt(match[1], 10);
+    if (isNaN(n) || n < -50 || n > 130) continue; // implausible
+    const unit = (match[2] || "").toLowerCase();
+    best = { n, unit }; // last plausible match wins
+  }
+  if (best) {
+    let unit = best.unit;
+    if (!unit) {
+      // heuristic: if F-plausible only → F; if C-plausible only → C; ambiguous → F (US default here)
+      if (best.n >= 50 && best.n <= 130) unit = "f";
+      else if (best.n >= -30 && best.n <= 49) unit = "c";
+      else unit = "f";
+    }
+    if (unit.startsWith("f")) { tempF = best.n; tempC = Math.round((tempF - 32) * 5/9); }
+    else                       { tempC = best.n; tempF = Math.round(tempC * 9/5 + 32); }
+  }
+
+  // 2) Keyword tags — capture severe conditions the AI must respect even without a number.
+  const tags = [];
+  const has = (arr) => arr.some(k => t.includes(k));
+  if (has(["freezing","frigid","snow","snowing","below zero","subzero","sub-zero","arctic","bitter cold","extremely cold","very cold"])) tags.push("severe-cold");
+  else if (has(["cold","chilly","brisk"])) tags.push("cold");
+  if (has(["heatwave","scorching","extremely hot","very hot","sweltering","boiling"])) tags.push("severe-hot");
+  else if (has(["hot","warm"])) tags.push("hot");
+  if (has(["rain","raining","rainy","downpour","drizzle","showers","wet","storm","thunder"])) tags.push("wet");
+  if (has(["snow","snowing","sleet"])) tags.push("snow");
+  if (has(["wind","windy","gusty","gusts","breezy"])) tags.push("wind");
+  if (has(["humid","muggy","sticky"])) tags.push("humid");
+  if (has(["sunny","clear","bright"])) tags.push("sunny");
+
+  // 3) If we still have no temp but a severity keyword is present, seed a sensible temp.
+  if (tempF == null) {
+    if (tags.includes("severe-cold")) { tempF = 20; tempC = -7; }
+    else if (tags.includes("cold"))   { tempF = 45; tempC = 7; }
+    else if (tags.includes("severe-hot")) { tempF = 95; tempC = 35; }
+    else if (tags.includes("hot"))    { tempF = 82; tempC = 28; }
+  }
+
+  return {
+    tempF, tempC,
+    condition: text,
+    tags,
+    city: "your location",
+    source: "manual",
+    raw: text
+  };
+}
+
+// Small helper used by the live-parse UI in Q6.
+function summarizeParsed(w) {
+  if (!w) return "";
+  const parts = [];
+  if (w.tempF != null) parts.push(`${w.tempF}°F · ${w.tempC}°C`);
+  if (w.tags && w.tags.length) parts.push(w.tags.join(" · "));
+  return parts.join("   ·   ");
+}
+
+/* -------------------- LOADING FLIPBOOK -------------------- */
+const LOADING_PHRASES = [
+  "brb raiding the closet",
+  "calculating inspo × vibes",
+  "consulting the mirror",
+  "shuffling the hangers",
+  "matching mood to fabric"
+];
+// Rows in the flipbook: top-ish, bottom-ish, shoe. Shuffling within each row
+// keeps the animation legible as an outfit rather than random blobs.
+const FLIPBOOK_ROWS = [
+  ["top-tshirt","top-blouse","top-sweater","top-hoodie","top-cardigan","dress-slip","dress-column","outer-coat","outer-moto","outer-trench"],
+  ["bottom-trousers","bottom-jean","bottom-skirt","bottom-shorts","bottom-pleated","bottom-cargo"],
+  ["shoe-loafer","shoe-sneaker","shoe-boot","shoe-heel","shoe-chunky","shoe-ballet","shoe-runner","shoe-sandal"]
+];
+const FLIPBOOK_COLORS = ["#1B1418","#C9A57A","#F0DFA0","#B01A2E","#4B5F7A","#6E7A45","#F4EEDC","#5A3A22"];
+let flipbookTimers = [];
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function startLoadingAnimation() {
+  // Seed each slot with an initial silhouette
+  document.querySelectorAll("#flipbook .slot").forEach((slot, i) => {
+    slot.innerHTML = garmentSVG(pick(FLIPBOOK_ROWS[i]), pick(FLIPBOOK_COLORS));
+  });
+  // Slot swap loop — each slot ticks independently for a jittery, mix-and-match feel
+  document.querySelectorAll("#flipbook .slot").forEach((slot, i) => {
+    const tick = () => {
+      slot.innerHTML = garmentSVG(pick(FLIPBOOK_ROWS[i]), pick(FLIPBOOK_COLORS));
+      flipbookTimers.push(setTimeout(tick, 380 + Math.random() * 240));
+    };
+    flipbookTimers.push(setTimeout(tick, 380 + i * 120));
+  });
+  // Phrase cycle
+  const phraseEl = document.getElementById("loading-phrase");
+  let idx = 0;
+  const shuffled = LOADING_PHRASES.slice().sort(() => Math.random() - 0.5);
+  phraseEl.textContent = shuffled[0];
+  const cyclePhrase = () => {
+    idx = (idx + 1) % shuffled.length;
+    phraseEl.style.animation = "none";
+    // force reflow to restart the CSS animation
+    void phraseEl.offsetWidth;
+    phraseEl.style.animation = "";
+    phraseEl.textContent = shuffled[idx];
+    flipbookTimers.push(setTimeout(cyclePhrase, 1400));
+  };
+  flipbookTimers.push(setTimeout(cyclePhrase, 1400));
+}
+function stopLoadingAnimation() {
+  flipbookTimers.forEach(t => clearTimeout(t));
+  flipbookTimers = [];
+}
+
+/* -------------------- OUTFIT GENERATION -------------------- */
+
+function candidateItems() {
+  // Filter catalog by weather FIRST (the binding constraint), then aesthetic union.
+  const w = state.weather || {};
+  const tempF = w.tempF ?? 65;
+  const tags = new Set(w.tags || []);
+  const chosenAesthetics = new Set([state.aesthetic, state.aesthetic_target].filter(Boolean));
+
+  // Tighter warmth-range fudge in extreme weather — no shorts at 30°F, no wool coats at 90°F.
+  const fudge = (tempF < 40 || tempF > 85) ? 3 : 8;
+
+  const items = CATALOG.filter(it => {
+    const [lo, hi] = it.warmth_range;
+    const tempOK = tempF >= (lo - fudge) && tempF <= (hi + fudge);
+    if (!tempOK) return false;
+
+    // Rain: reject suede/leather-sensitive tags if present in the item name (heuristic)
+    if (tags.has("wet") && /suede/i.test(it.name)) return false;
+
+    // aesthetic: match either the current or target aesthetic; accessories pass through
+    const accessoryCats = new Set(["jewelry","bag","headwear","scarf","gloves","sunglasses","neck"]);
+    const aesthOK = it.aesthetics.some(a => chosenAesthetics.has(a)) || accessoryCats.has(it.category);
+    return aesthOK;
+  });
+  return items;
+}
+
+// Track the last outfit's IDs so re-rolls can request different items.
+let lastOutfitIds = [];
+
+function fallbackCompose(items) {
+  // Rule-based composer used when the API key isn't set. Weather-first, no exceptions.
+  const w = state.weather || {};
+  const tempF = w.tempF ?? 65;
+  const tags = new Set(w.tags || []);
+  const avoid = new Set(lastOutfitIds);
+  const usable = items.filter(i => !avoid.has(i.id));
+  // If avoidance leaves us empty, fall back to all items.
+  const pool = (cat) => {
+    const strict = usable.filter(i => i.category === cat);
+    return (strict.length ? strict : items.filter(i => i.category === cat));
+  };
+  // Rank pool for a category by how well it suits the current temp (closer to the sweet spot = better)
+  const bestFit = (cat) => {
+    const p = pool(cat);
+    if (!p.length) return null;
+    const scored = p.map(it => {
+      const [lo, hi] = it.warmth_range;
+      const mid = (lo + hi) / 2;
+      const inRange = tempF >= lo && tempF <= hi ? 0 : Math.min(Math.abs(tempF - lo), Math.abs(tempF - hi));
+      return { it, score: inRange + Math.random() * 3 }; // small jitter for variety
+    }).sort((a, b) => a.score - b.score);
+    return scored[0].it;
+  };
+
+  const outfit = { pieces: [], note: "" };
+  const outerNeeded = tempF < 68 || tags.has("cold") || tags.has("severe-cold") || tags.has("wet") || tags.has("wind") || tags.has("snow");
+
+  // Silhouette structure: 3 options — top+bottom, dress, onepiece.
+  // In truly cold weather, force top+bottom so we can layer.
+  // On re-rolls (avoid set non-empty), rotate away from whatever structure the last outfit used.
+  const dressAvailable = pool("dress").length > 0 && !(tempF < 50);
+  const onepieceAvailable = pool("onepiece").length > 0 && !(tempF < 50);
+  const structures = [];
+  if (!outerNeeded || tempF >= 50) {
+    if (dressAvailable) structures.push("dress");
+    if (onepieceAvailable) structures.push("onepiece");
+  }
+  structures.push("top-bottom"); // always available
+
+  // On re-roll, drop the last outfit's structure if we can
+  const lastCats = new Set(Array.from(avoid).map(id => CATALOG.find(c => c.id === id)?.category).filter(Boolean));
+  let lastStructure = "top-bottom";
+  if (lastCats.has("dress")) lastStructure = "dress";
+  else if (lastCats.has("onepiece")) lastStructure = "onepiece";
+  const filtered = avoid.size > 0 && structures.length > 1
+    ? structures.filter(s => s !== lastStructure)
+    : structures;
+
+  const chosen = filtered[Math.floor(Math.random() * filtered.length)];
+  if (chosen === "dress") {
+    outfit.pieces.push(bestFit("dress"));
+  } else if (chosen === "onepiece") {
+    outfit.pieces.push(bestFit("onepiece"));
+  } else {
+    outfit.pieces.push(bestFit("top"));
+    outfit.pieces.push(bestFit("bottom"));
+  }
+  outfit.pieces.push(bestFit("shoes"));
+  if (outerNeeded) {
+    const outer = bestFit("outerwear");
+    if (outer) outfit.pieces.push(outer);
+  }
+  const bag = bestFit("bag"); if (bag) outfit.pieces.push(bag);
+  if (Math.random() < 0.35) { const h = bestFit("headwear"); if (h) outfit.pieces.push(h); }
+  const jewels = pool("jewelry").sort(() => Math.random() - 0.5).slice(0, 1 + Math.floor(Math.random() * 2));
+  outfit.pieces.push(...jewels);
+  outfit.pieces = outfit.pieces.filter(Boolean);
+
+  outfit.note = (tempF < 40)
+    ? "Layer under this — the catalog is thin on heavy knits right now."
+    : "A working sketch. Wire the API in the file for sharper picks.";
+  return outfit;
+}
+
+async function askClaudeForOutfit(items) {
+  // Build a compact catalog for the prompt
+  const catalog = items.map(i => ({
+    id: i.id, category: i.category, name: i.name, brand: i.brand,
+    aesthetics: i.aesthetics, palettes: i.palettes, warmth_range: i.warmth_range,
+    occasions: i.occasions, colors: i.colors
+  }));
+
+  const w = state.weather || {};
+  const priorFeedback = relevantFeedback().map(f => ({
+    when: new Date(f.ts).toISOString().slice(0,10),
+    on_a_day_like: { tempF: f.tempF, condition: f.condition, occasion: f.occasion },
+    we_generated: f.generated,
+    they_would_have_worn: f.feedback
+  }));
+  const userCtx = {
+    aesthetic_current: state.aesthetic,
+    aesthetic_target: state.aesthetic_target,
+    palette_current: state.palette_current,
+    palette_target: state.palette_target,
+    weather: {
+      city: w.city,
+      tempF: w.tempF,
+      tempC: w.tempC,
+      condition: w.condition,
+      tags: w.tags || [],
+      source: w.source
+    },
+    occasion: state.occasion || null,
+    vibe: state.vibe || null,
+    song_stuck_in_head: state.song || null,
+    learned_preferences: priorFeedback,
+    avoid_item_ids: lastOutfitIds // for re-rolls — don't just repeat the last outfit
+  };
+
+  const system = `You are a personal stylist composing an outfit from a finite catalog. Decide in this order — WEATHER IS AN ABSOLUTE HARD CONSTRAINT, not a preference. If you cannot satisfy weather with the given catalog you must still choose the warmest / most weather-appropriate items available and explain the gap in the note.
+
+DECISION ORDER
+1) WEATHER FIRST — this cannot be overridden by aesthetic, occasion, vibe, palette, or learned_preferences. The user's temperature and weather tags define what is physically wearable. Aesthetic influences WHICH weather-appropriate items you pick, never WHETHER weather-appropriate items are picked.
+
+   Temperature bands (tempF):
+   - Below 32°F (freezing): heavy outerwear MANDATORY — pick a wool coat, heavy trench, or comparable. Closed boots MANDATORY (never loafers, sneakers, heels, or open shoes). Bare arms, thin silks, cropped tanks, shorts, or slip dresses are FORBIDDEN as the only layer.
+   - 32–45°F: real outerwear MANDATORY (coat, heavy moto, trench, or shell). Closed boots or substantial boots preferred. No open shoes, no shorts.
+   - 45–60°F: outerwear REQUIRED (moto, trench, chore, shell, or shawl). Boots or loafers OK; sneakers acceptable if aesthetic calls for them.
+   - 60–72°F: outerwear OPTIONAL. Include a light layer only if weather tags include wind/wet/cold or occasion is evening.
+   - 72–82°F: NO outerwear. Any shoe.
+   - Above 82°F: open silhouettes preferred, NO outerwear, NO heavy layers.
+
+   Weather tags (from user input, may include: severe-cold, cold, severe-hot, hot, wet, snow, wind, humid, sunny):
+   - "severe-cold" or "snow" → treat as tempF < 32°F regardless of number.
+   - "wet" → prefer shell/trench; AVOID suede, AVOID wool coats if a shell is available.
+   - "wind" → prefer structured outerwear over shawl.
+   - "severe-hot" → treat as 90°F+, force minimal coverage.
+
+   If the catalog does not contain a piece warm enough for the stated temperature, pick the warmest available item AND mention in the note that the user may want to layer or grab something warmer.
+2) SILHOUETTE. Pick EXACTLY ONE of three structures:
+   (a) top + bottom (bottom can be trousers, jeans, cargo, skirt, shorts, or bermuda)
+   (b) dress
+   (c) onepiece (jumpsuit, romper, or overalls)
+   Never combine structures. Match the aesthetic blend: 60% aesthetic_current, 40% aesthetic_target. If they're the same, lean all the way in.
+
+   IMPORTANT — silhouette variety on re-rolls: if avoid_item_ids is non-empty, that means the user is re-rolling. You MUST vary the silhouette structure from the last outfit when the weather and aesthetic allow it. Concretely:
+   - If the last outfit was top+trousers and skirts/shorts are weather-appropriate, try top+skirt or top+shorts.
+   - If the last outfit was top+bottom, try a dress or onepiece (or vice versa) whenever the catalog and weather support it.
+   - Cycle through structures across successive re-rolls. Do not default to top+bottom every time.
+   The only exception is when temperature or occasion truly forbids other structures (e.g. below 40°F rules out most dresses/rompers). In that case, at minimum vary the bottom TYPE (swap trousers for skirt, jean for skirt, shorts for bermuda, etc.).
+3) PALETTE. Colors bridge palette_current → palette_target, weighted 60/40. This is a bridge, not a leap.
+4) OCCASION. Treat as a hard filter, not a suggestion. "work" → no cropped leather tanks. "wedding-guest" → no sneakers or cargos. "casual" → anything goes within the aesthetic.
+5) ACCESSORIES. Caps: max 3 jewelry, max 1 headwear, max 1 bag, max 1 neck (silk scarf / tie / bandana), max 1 sunglasses, max 1 gloves, max 1 scarf (winter). Zero minimum on any. Only add what earns its place.
+   Weather-driven additions:
+   - tempF < 40 → strongly consider gloves AND a winter scarf. Both are separate from outerwear — they don't count against the outerwear slot.
+   - tempF < 32 → gloves and a winter scarf are near-mandatory.
+   - "sunny" tag OR tempF > 75 with clear condition → sunglasses are appropriate.
+   Styling constraints:
+   - Never pair a winter (heavy knit) scarf with a light-scarf category item.
+   - If picking a neck accessory (tie / silk scarf / bandana), do NOT also pick a headwear scarf/bandana — one neck ornament max across neck + headwear.
+   - Ties belong to preppy, edgy, or eclectic aesthetics. Do not pair a tie with romantic or minimalist unless the occasion explicitly calls for it.
+6) VIBE + SONG. Do NOT let these change item picks. Use them only to write the stylist note — the song especially is a mood signal, not a styling instruction.
+7) LEARNED PREFERENCES. If the user has left feedback on prior outfits (see learned_preferences), treat it as strong prior evidence. Look for patterns — categories they consistently swap out, silhouettes they push away from, pieces they gravitate toward. Apply the pattern, not the specific swap: if they've asked to trade wide-leg trousers for a bias midi skirt twice, they probably prefer skirts to trousers on similar days. Never repeat a piece the user explicitly rejected on a similar day.
+
+8) GENDER LEAN OF ACCESSORIES. Read the aesthetic and the vibe/occasion text together to gauge whether the outfit should lean masculine, feminine, or androgynous, then pick accessories that match:
+- Streetwear aesthetic, or ANY vibe/occasion using words like "cool", "swaggy", "hard", "tough", "masc", "grunge", "sporty" → lean masculine. Prefer chunky rings, signet rings, Cuban/rope chains, cuffs, pendants. AVOID delicate earrings, drop earrings, hoops, pearls, tennis bracelets, beaded charms, brooches unless the user has explicitly signalled otherwise.
+- Romantic aesthetic, or vibes using "soft", "delicate", "pretty", "ethereal", "feminine" → lean feminine. Prefer hoops, pearls, beaded pieces, brooches, tennis bracelets.
+- Everything else → androgynous default: neutral pieces (cuffs, small rings, plain chains) unless the item genuinely fits the mood.
+This applies to headwear and bags too: no silk floral scarves for a "cool" streetwear look; no baseball caps for a "delicate" romantic one.
+
+HARD RULES
+- Return valid JSON only, no prose outside JSON.
+- Pick items ONLY from the provided catalog by id.
+- Exactly one shoes. Zero or one outerwear (but always outerwear when weather requires — see rule 1).
+- Body: pick EITHER 1 dress, OR 1 onepiece, OR (1 top + 1 bottom). Never mix structures.
+- If avoid_item_ids is non-empty, treat it as items to avoid — this is a re-roll, pick DIFFERENT items where possible. It's OK to reuse if the catalog is thin.
+- Stylist note: one sentence, max 24 words, second person ("you", "your"), plain-spoken. No fashion cliches ("effortless", "elevated", "chic", "curated", "the perfect"). Sound like a friend, not a brand.
+- If a song was provided, thread ONE small reference to its mood into the note (not the title itself unless it truly fits).
+
+Output shape:
+{ "item_ids": ["t1","b1",...], "note": "..." }`;
+
+  const user = `USER:
+${JSON.stringify(userCtx, null, 2)}
+
+CATALOG:
+${JSON.stringify(catalog)}`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: ANTHROPIC_MODEL,
+      max_tokens: 600,
+      system,
+      messages: [{ role: "user", content: user }]
+    })
+  });
+  if (!res.ok) throw new Error("api-" + res.status);
+  const data = await res.json();
+  const text = data.content?.[0]?.text || "";
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("bad-json");
+  const parsed = JSON.parse(jsonMatch[0]);
+  const pieces = parsed.item_ids.map(id => CATALOG.find(c => c.id === id)).filter(Boolean);
+  return { pieces, note: parsed.note || "" };
+}
+
+async function generateOutfit(isRegen = false) {
+  // ensure weather is set — prefer already-parsed state, then re-parse the raw text,
+  // and only as a last resort assume a mild default.
+  if (!state.weather && state.weather_text) {
+    state.weather = parseManualWeather(state.weather_text);
+  }
+  if (!state.weather || state.weather.tempF == null && (!state.weather.tags || !state.weather.tags.length)) {
+    // No signal at all — flag it in the banner rather than silently guessing extreme.
+    state.weather = state.weather || { condition: "not specified", city: "your location", source: "manual" };
+    state.weather.tempF ??= 65; state.weather.tempC ??= 18;
+    showBanner("Couldn't read a temperature — assuming a mild 65°F. Add a number for better picks.");
+  }
+
+  document.getElementById("flow").style.display = "none";
+  document.getElementById("result").classList.remove("active");
+  document.getElementById("loading").classList.add("active");
+  startLoadingAnimation();
+  const loadingStart = performance.now();
+  const MIN_LOADING_MS = 3500;
+
+  const items = candidateItems();
+  let outfit;
+  try {
+    if (ANTHROPIC_API_KEY && ANTHROPIC_API_KEY.startsWith("sk-ant")) {
+      outfit = await askClaudeForOutfit(items);
+    } else {
+      outfit = fallbackCompose(items);
+    }
+  } catch (err) {
+    console.warn("Falling back to local composer:", err);
+    showBanner("Couldn't reach Claude — showing a rule-based pick. Check your API key or network.");
+    outfit = fallbackCompose(items);
+  }
+
+  // Hold the loader long enough for the flipbook to actually play through a few frames.
+  const elapsed = performance.now() - loadingStart;
+  if (elapsed < MIN_LOADING_MS) {
+    await new Promise(r => setTimeout(r, MIN_LOADING_MS - elapsed));
+  }
+  stopLoadingAnimation();
+  document.getElementById("loading").classList.remove("active");
+  currentOutfit = outfit;
+  lastOutfitIds = (outfit.pieces || []).map(p => p.id).filter(Boolean);
+  // reset feedback panel to closed state each generation
+  const fb = document.getElementById("feedback");
+  const form = fb.querySelector(".feedback-inner");
+  const thanks = document.getElementById("feedback-thanks");
+  fb.hidden = true;
+  form.hidden = false;
+  thanks.hidden = true;
+  document.getElementById("feedback_text").value = "";
+  renderResult(outfit);
+}
+
+/* -------------------- RENDER RESULT -------------------- */
+function renderResult(outfit) {
+  const w = state.weather || {};
+  const today = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  document.getElementById("rk-date").textContent = today.toUpperCase();
+  document.getElementById("rk-place").textContent = w.city || "your location";
+  const tempStr = (w.tempF != null && w.tempC != null)
+    ? `<b>${w.tempF}°F</b> · <b>${w.tempC}°C</b>` : "—";
+  document.getElementById("rk-temp").innerHTML = tempStr;
+  document.getElementById("rk-cond").textContent = w.condition || "";
+
+  const note = outfit.note || "";
+  document.getElementById("rk-note").textContent = note ? `"${note}"` : "";
+
+  // group into sections
+  const groups = [
+    { key:"body", title:"The body", nums:"01",
+      cats:["dress","onepiece","top","bottom"] },
+    { key:"shoes", title:"On the feet", nums:"02",
+      cats:["shoes"] },
+    { key:"outer", title:"Over it all", nums:"03",
+      cats:["outerwear","scarf","gloves"] },
+    { key:"acc", title:"The finishing", nums:"04",
+      cats:["headwear","neck","jewelry","bag","sunglasses"] },
+  ];
+
+  const container = document.getElementById("rk-sections");
+  container.innerHTML = "";
+  groups.forEach(g => {
+    const pieces = outfit.pieces.filter(p => g.cats.includes(p.category));
+    if (pieces.length === 0) return;
+    const sec = document.createElement("section");
+    sec.className = "section";
+    sec.innerHTML = `
+      <div class="section-title">
+        <span class="num">${g.nums}</span>
+        <h3>${g.title}</h3>
+        <span class="rule"></span>
+      </div>
+      <div class="items">
+        ${pieces.map(renderItem).join("")}
+      </div>
+    `;
+    container.appendChild(sec);
+  });
+
+  document.getElementById("result").classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderItem(item) {
+  const primary = item.colors[0];
+  // Photo priority: explicit item.image_url wins; otherwise try convention `{id}.jpg`
+  // sitting alongside the HTML. If neither loads, fall back to the SVG silhouette.
+  // The onerror handler swaps in the SVG so cards never show a broken image icon.
+  const svg = garmentSVG(item.shape, primary);
+  const src = item.image_url || `images/${item.id}.jpg`;
+  const photo = `<img class="item-photo" src="${src}" alt="${item.name}" loading="lazy"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+       <div class="item-svg" style="display:none">${svg}</div>`;
+  return `<article class="item">
+    <div class="canvas">
+      ${photo}
+      <div class="swatches">${item.colors.map(c => `<span style="background:${c}"></span>`).join("")}</div>
+    </div>
+    <div class="name">${item.name}</div>
+    <div class="brand">${item.brand}</div>
+    <a class="shop" href="${item.search_url}" target="_blank" rel="noopener">Shop</a>
+  </article>`;
+}
+
+/* -------------------- INIT -------------------- */
+function init() {
+  renderAesthetics();
+  // Q2 palette order:
+  renderPalettes("palette_current", ["neutrals","earth","cool","bold"]);
+  // Q3 same palettes, different order (per spec — "same options as above but rearranged")
+  renderPalettes("palette_target",  ["bold","cool","earth","neutrals"]);
+  bindOpts();
+  bindNav();
+  // today badge
+  document.getElementById("today").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" }).toUpperCase();
+  showStep(1);
+}
+init();
+</script>
+</body>
+</html>
